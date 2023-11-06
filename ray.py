@@ -95,8 +95,29 @@ class Sphere:
         Return:
           Hit -- the hit data
         """
-        # TODO A4 implement this function
-        return no_hit
+
+        # calculate coefficients for quadratic equation representing intersection
+        a = 0
+        b = 0
+        c = self.radius**2
+        for i in range(3):
+            a += ray.direction[i]**2
+            b += ray.direction[i]*(ray.origin[i]-self.center[i])
+            c += (ray.direction[i])
+
+        # solve quadratic formula for t
+        if b**2-4*a*c < 0:
+            return no_hit 
+        else:
+          t_1 = (-1*b + np.sqrt(b**2-4*a*c))/(2*a)
+          t_2 = (-1*b - np.sqrt(b**2-4*a*c))/(2*a)
+          if t_1 > t_2:
+              t = t_2 
+          else:
+              t = t_1 
+          # todo: return hit information
+        
+        
 
 
 class Triangle:
@@ -261,4 +282,20 @@ def render_image(camera, scene, lights, nx, ny):
       (ny, nx, 3) float32 -- the RGB image
     """
     # TODO A4 implement this function
-    return np.zeros((ny,nx,3), np.float32)
+    output = np.zeros((ny,nx,3), np.float32)
+    for i in range(ny):
+        for j in range(nx):
+            # calculate world coordinates
+            x = 2*j/nx-1
+            y = -1*i/ny+1
+            ray_dir = [0, 0, -1]
+            ray = Ray(origin=[x, y, 0], direction=ray_dir)
+            # check if this is accurate
+            intersection = scene.surfs[0].intersect(ray);
+            if intersection.equals(no_hit):
+                output[i][j] = [0,0,0]
+            else:
+                output[j][j] = [255, 255, 255]
+            # add to output image
+
+    return output
