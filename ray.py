@@ -97,13 +97,10 @@ class Sphere:
         """
 
         # calculate coefficients for quadratic equation representing intersection
-        a = 0
-        b = 0
-        c = self.radius**2
-        for i in range(3):
-            a += ray.direction[i]**2
-            b += ray.direction[i]*(ray.origin[i]-self.center[i])
-            c += (ray.direction[i])
+
+        c = np.dot(ray.origin-self.origin, ray.origin-self.origin) - self.radius**2
+        b = 2*np.dot(ray.origin-self.origin, ray.direction-self.origin)
+        a = np.dot(ray.direction-self.origin, ray.direction-self.origin)
 
         # solve quadratic formula for t
         if b**2-4*a*c < 0:
@@ -115,9 +112,12 @@ class Sphere:
               t = t_2 
           else:
               t = t_1 
-          # todo: return hit information
-        
-        
+          point = []
+          for i in range(3):
+              point += [ray.origin[i]+t*ray.direction[i]]
+          normal = np.array(point) - self.center 
+          normal = normal/np.linalg.norm(normal)
+          return Hit(t, point, normal, self.material)   
 
 
 class Triangle:
@@ -292,7 +292,7 @@ def render_image(camera, scene, lights, nx, ny):
             ray = Ray(origin=[x, y, 0], direction=ray_dir)
             # check if this is accurate
             intersection = scene.surfs[0].intersect(ray);
-            if intersection.equals(no_hit):
+            if intersection == no_hit:
                 output[i][j] = [0,0,0]
             else:
                 output[j][j] = [255, 255, 255]
