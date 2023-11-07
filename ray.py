@@ -98,9 +98,9 @@ class Sphere:
 
         # calculate coefficients for quadratic equation representing intersection
 
-        c = np.dot(ray.origin-self.origin, ray.origin-self.origin) - self.radius**2
-        b = 2*np.dot(ray.origin-self.origin, ray.direction-self.origin)
-        a = np.dot(ray.direction-self.origin, ray.direction-self.origin)
+        c = np.dot(ray.origin-self.center, ray.origin-self.center) - self.radius**2
+        b = 2*np.dot(ray.origin-self.center, ray.direction)
+        a = np.dot(ray.direction, ray.direction)
 
         # solve quadratic formula for t
         if b**2-4*a*c < 0:
@@ -176,7 +176,23 @@ class Camera:
         """
         # TODO A4 implement this function
         # generate ray using perspective
-        return Ray(vec([0,0,0]), vec([0,0,1]))
+
+        # convert image point to world coordinates
+        w = self.vfov*self.aspect
+        h = self.vfov
+        
+        text_coords = img_point + [1.]
+        scale_m = np.array([[w, 0, -1*w/2,],[0, -1*h, h/2],[0,0,1]]) # scale and translate to origin
+        theta = 0
+        # TODO: fix rotation matrix
+        rot_m = np.array([[np.cos(theta), -1*np.sin(theta), 0], [np.sin(theta), np.cos(theta), 0], [0, 0, 1]]) # rotate based on up vector
+        translate_m = np.array([[1, 0, self.target[1]], [0, 1, self.target[0]], [0, 0, 1]])
+        img_plane_coords = translate_m @ (rot_m @ (scale_m @ text_coords))
+
+        # subtract camera location from image point
+        ray_dir = img_plane_coords - self.eye
+
+        return Ray(self.eye, ray_dir, 1)
 
 
 class PointLight:
@@ -289,16 +305,18 @@ def render_image(camera, scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            x = 2*j/nx-1
-            y = -1*i/ny+1
-            ray_dir = [0, 0, -1]
-            ray = Ray(origin=[x, y, 0], direction=ray_dir)
-            # check if this is accurate
+            texture_coords = np.array([j/nx, i/ny, 1])
+            m = np.array([[2., 0., -1.],[0., -2., 1.],[0., 0., 1.]])
+            image_coords = m @ texture_coords
+            ray_dir = [0., 0., -1.]
+            ray = Ray(origin=[image_coords[0], image_coords[1], 0], direction=ray_dir)
+            #print(ray.origin)
             intersection = scene.surfs[0].intersect(ray);
+    
             if intersection == no_hit:
                 output[i][j] = [0,0,0]
             else:
-                output[j][j] = [255, 255, 255]
-            # add to output image
+                output[i][j] = [255, 255, 255]
+            #add to output image
 
     return output
