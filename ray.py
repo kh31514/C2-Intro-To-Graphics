@@ -146,8 +146,10 @@ class Camera:
         """Compute the ray corresponding to a point in the image.
 
         Parameters:
-          img_point : (2,) -- a 2D point in [0,1] x [0,1], where (0,0) is the lower left 
-                      corner of the image and (1,1) is the upper right
+          img_point : (2,) -- a 2D point in [0,1] x [0,1], where (0,0) is the upper left
+                      corner of the image and (1,1) is the lower right.
+                      (note: since we initially released this code with specs saying 0,0 was at the bottom left, we will
+                       accept either convention for this assignment)
         Return:
           Ray -- The ray corresponding to that image location (not necessarily normalized)
         """
