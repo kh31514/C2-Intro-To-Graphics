@@ -26,11 +26,12 @@ parser.add_argument('--white', type=float, default=1.0, help='white point')
 parser.add_argument('--outFile', type=str, default=default_outFile, help='name of output PNG image')
 args = parser.parse_args()
 
-def render(camera, scene, lights):
+def render(camera, scene, lights, flipY=False):
 
     ny = args.ny or int(np.round(args.nx / camera.aspect))
 
     img = render_image(camera, scene, lights, args.nx, ny)
 
     cam_img_ui8 = to_srgb8(img / args.white)
-    Image.fromarray(cam_img_ui8[::-1,:,:], 'RGB').save(args.outFile)
+    Image.fromarray(cam_img_ui8, 'RGB').save(args.outFile)
+    # Image.fromarray(cam_img_ui8[::-1,:,:], 'RGB').save(args.outFile)

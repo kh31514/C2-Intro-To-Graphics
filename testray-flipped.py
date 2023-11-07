@@ -7,9 +7,8 @@ def assert_direction_matches(v, w):
     np.testing.assert_almost_equal(normalize(v), normalize(w))
 
 
-def flipy_vec(vect):
+def image_point_vector(vect):
     v = vec(vect);
-    v[1] = 1-v[1];
     return v;
 
 class TestSphereIntersect(unittest.TestCase):
@@ -78,23 +77,23 @@ class TestCamera(unittest.TestCase):
         # A camera located at the origin facing the -z direction
         cam = Camera()
         # Center ray is straight down the axis
-        ray = cam.generate_ray(flipy_vec([0.5, 0.5]))
+        ray = cam.generate_ray(image_point_vector([0.5, 0.5]))
         np.testing.assert_almost_equal(ray.origin, vec([0,0,0]))
         assert_direction_matches(ray.direction, vec([0,0,-1]))
         # FOV is 90 degrees, so corner rays are centered in octants
-        ray = cam.generate_ray(flipy_vec([0, 0]))
+        ray = cam.generate_ray(image_point_vector([0, 0]))
         assert_direction_matches(ray.direction, vec([-1,-1,-1]))
-        ray = cam.generate_ray(flipy_vec([1, 0]))
+        ray = cam.generate_ray(image_point_vector([1, 0]))
         assert_direction_matches(ray.direction, vec([ 1,-1,-1]))
-        ray = cam.generate_ray(flipy_vec([0, 1]))
+        ray = cam.generate_ray(image_point_vector([0, 1]))
         assert_direction_matches(ray.direction, vec([-1, 1,-1]))
-        ray = cam.generate_ray(flipy_vec([1, 1]))
+        ray = cam.generate_ray(image_point_vector([1, 1]))
         assert_direction_matches(ray.direction, vec([ 1, 1,-1]))
         # Spot check something that is not a corner
-        dir00 = cam.generate_ray(flipy_vec([0, 0])).direction
-        dir10 = cam.generate_ray(flipy_vec([1, 0])).direction
-        dir01 = cam.generate_ray(flipy_vec([0, 1])).direction
-        dirab = cam.generate_ray(flipy_vec([0.2, 0.6])).direction
+        dir00 = cam.generate_ray(image_point_vector([0, 0])).direction
+        dir10 = cam.generate_ray(image_point_vector([1, 0])).direction
+        dir01 = cam.generate_ray(image_point_vector([0, 1])).direction
+        dirab = cam.generate_ray(image_point_vector([0.2, 0.6])).direction
         assert_direction_matches(dirab, 0.2 * dir00 + 0.2 * dir10 + 0.6 * dir01)
 
     def test_fov(self):
@@ -103,13 +102,13 @@ class TestCamera(unittest.TestCase):
         cam = Camera(vfov=vfov)
         s = np.tan(vfov/2 * np.pi/180)
         # Center ray is still straight down the axis
-        ray = cam.generate_ray(flipy_vec([0.5, 0.5]))
+        ray = cam.generate_ray(image_point_vector([0.5, 0.5]))
         np.testing.assert_almost_equal(ray.origin, vec([0,0,0]))
         assert_direction_matches(ray.direction, vec([0,0,-1]))
         # FOV corner rays are scaled by s
-        ray = cam.generate_ray(flipy_vec([0, 0]))
+        ray = cam.generate_ray(image_point_vector([0, 0]))
         assert_direction_matches(ray.direction, vec([-s,-s,-1]))
-        ray = cam.generate_ray(flipy_vec([1, 1]))
+        ray = cam.generate_ray(image_point_vector([1, 1]))
         assert_direction_matches(ray.direction, vec([ s, s,-1]))
 
     def test_aspect(self):
@@ -117,30 +116,30 @@ class TestCamera(unittest.TestCase):
         aspect = 1.5
         cam = Camera(aspect=aspect)
         # Center ray is still straight down the axis
-        ray = cam.generate_ray(flipy_vec([0.5, 0.5]))
+        ray = cam.generate_ray(image_point_vector([0.5, 0.5]))
         np.testing.assert_almost_equal(ray.origin, vec([0,0,0]))
         assert_direction_matches(ray.direction, vec([0,0,-1]))
         # FOV corner rays are scaled by aspect
-        ray = cam.generate_ray(flipy_vec([0, 0]))
+        ray = cam.generate_ray(image_point_vector([0, 0]))
         assert_direction_matches(ray.direction, vec([-aspect,-1,-1]))
-        ray = cam.generate_ray(flipy_vec([1, 1]))
+        ray = cam.generate_ray(image_point_vector([1, 1]))
         assert_direction_matches(ray.direction, vec([ aspect, 1,-1]))
 
     def test_square_frame(self):
         # A camera with a frame where up is equal to v
         cam = Camera(eye=vec([1,2,2]), target=vec([1,4,2]), up=vec([0,0,1]))
         # Center ray is straight down the y axis
-        ray = cam.generate_ray(flipy_vec([0.5, 0.5]))
+        ray = cam.generate_ray(image_point_vector([0.5, 0.5]))
         np.testing.assert_almost_equal(ray.origin, vec([1,2,2]))
         assert_direction_matches(ray.direction, vec([0,1,0]))
         # corners are like default camera but (x,y) is (x, z)
-        ray = cam.generate_ray(flipy_vec([0, 0]))
+        ray = cam.generate_ray(image_point_vector([0, 0]))
         assert_direction_matches(ray.direction, vec([-1, 1,-1]))
-        ray = cam.generate_ray(flipy_vec([1, 0]))
+        ray = cam.generate_ray(image_point_vector([1, 0]))
         assert_direction_matches(ray.direction, vec([ 1, 1,-1]))
-        ray = cam.generate_ray(flipy_vec([0, 1]))
+        ray = cam.generate_ray(image_point_vector([0, 1]))
         assert_direction_matches(ray.direction, vec([-1, 1, 1]))
-        ray = cam.generate_ray(flipy_vec([1, 1]))
+        ray = cam.generate_ray(image_point_vector([1, 1]))
         assert_direction_matches(ray.direction, vec([ 1, 1, 1]))
 
     def test_arbitrary_frame(self):
@@ -151,11 +150,11 @@ class TestCamera(unittest.TestCase):
         vfov = 47
         cam = Camera(eye=eye, target=target, up=up, vfov=vfov)
         # Center ray points towards target
-        ray = cam.generate_ray(flipy_vec([0.5, 0.5]))
+        ray = cam.generate_ray(image_point_vector([0.5, 0.5]))
         np.testing.assert_almost_equal(ray.origin, eye)
         assert_direction_matches(ray.direction, target - eye)
         # top-center ray coplanar with eye, target, up
-        ray = cam.generate_ray(flipy_vec([0.5, 1]))
+        ray = cam.generate_ray(image_point_vector([0.5, 1]))
         np.testing.assert_allclose(
             ray.direction @ np.cross(target - eye, up),
             vec([0,0,0]), 1e-6, 1e-6
