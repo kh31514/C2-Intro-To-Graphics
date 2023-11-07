@@ -173,6 +173,7 @@ class Camera:
           Ray -- The ray corresponding to that image location (not necessarily normalized)
         """
         # TODO A4 implement this function
+        # generate ray using perspective
         return Ray(vec([0,0,0]), vec([0,0,1]))
 
 
