@@ -161,7 +161,9 @@ class Camera:
         self.aspect = aspect
         self.f = None; # you should set this to the distance from your center of projection to the image plane
         self.M = np.eye(4);  # set this to the matrix that transforms your camera's coordinate system to world coordinates
-        # TODO A4 implement this constructor to store whatever you need for ray generation
+        self.target = target;
+        self.up = up
+        self.vfov = vfov
 
     def generate_ray(self, img_point):
         """Compute the ray corresponding to a point in the image.
@@ -177,21 +179,24 @@ class Camera:
         # TODO A4 implement this function
         # generate ray using perspective
 
-        # convert image point to world coordinates
-        w = self.vfov*self.aspect
-        h = self.vfov
+        d = np.linalg.norm(self.eye-self.target)
+        h = d*np.tan(self.vfov/2)
+        w = h*self.aspect
         
-        text_coords = img_point + [1.]
-        scale_m = np.array([[w, 0, -1*w/2,],[0, -1*h, h/2],[0,0,1]]) # scale and translate to origin
-        theta = 0
-        # TODO: fix rotation matrix
-        rot_m = np.array([[np.cos(theta), -1*np.sin(theta), 0], [np.sin(theta), np.cos(theta), 0], [0, 0, 1]]) # rotate based on up vector
-        translate_m = np.array([[1, 0, self.target[1]], [0, 1, self.target[0]], [0, 0, 1]])
-        img_plane_coords = translate_m @ (rot_m @ (scale_m @ text_coords))
+        
+        text_coords = img_point 
+        m = np.array([[w, 0, -1.*w/2,],[0, -1.*h, h/2],[0,0,1]]) # scale and translate to origin
+        img_coords = m @ text_coords
+        u = img_coords[0]
+        v = img_coords[1]
+        w_vec = (self.target-self.eye)/np.linalg.norm(self.target-self.eye)
+        v_vec = self.up/np.linalg.norm(self.up)
+        u_vec = np.cross(v_vec, w_vec)/np.linalg.norm(np.cross(v_vec, w_vec))
 
         # subtract camera location from image point
-        ray_dir = img_plane_coords - self.eye
+        ray_dir = d*w_vec + u * u_vec + v * v_vec
 
+        # TODO find valid start location
         return Ray(self.eye, ray_dir, 1)
 
 
@@ -305,11 +310,13 @@ def render_image(camera, scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
+            # TODO: figure out which one of these is right
+            #texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
+            texture_coords = np.array([(j)/nx, (i)/ny, 1])
             m = np.array([[2., 0., -1.],[0., -2., 1.],[0., 0., 1.]])
             image_coords = m @ texture_coords
             ray_dir = [0., 0., -1.]
-            ray = Ray(origin=[image_coords[0], image_coords[1], 0], direction=ray_dir)
+            ray = camera.generate_ray(texture_coords)
             #print(ray.origin)
             intersection = scene.surfs[0].intersect(ray);
     
