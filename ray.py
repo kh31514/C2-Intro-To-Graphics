@@ -213,7 +213,7 @@ class PointLight:
         self.position = position
         self.intensity = intensity
 
-    def illuminate(self, ray, hit, scene):
+    def illuminate(self, ray: Ray, hit: Hit, scene):
         """Compute the shading at a surface point due to this light.
 
         Parameters:
@@ -224,7 +224,24 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0, 0, 0])
+        for surf in scene.surfs:
+            if surf.intersection(ray) == hit:
+                point_to_light = hit.point - self.position
+
+                # make a unit vector
+                point_to_light /= np.linalg.norm(point_to_light)
+
+                diffuse_shading = surf.material.k_d * \
+                    self.intensity * (hit.normal @ point_to_light)
+
+                reflection_direction = 2 * \
+                    (hit.normal @ point_to_light) * \
+                    (hit.normal - point_to_light)
+
+                specular_shading = surf.material.k_s * self.intensity * \
+                    (reflection_direction @ ray)**surf.material.p
+
+                return diffuse_shading + specular_shading
 
 
 class AmbientLight:
@@ -248,7 +265,24 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0, 0, 0])
+        for surf in scene.surfs:
+            if surf.intersection(ray) == hit:
+                diffuse_shading = surf.material.k_a * self.intensity * surf.material.k_d
+
+                point_to_light = hit.point - self.position
+
+                # make a unit vector
+                point_to_light /= np.linalg.norm(point_to_light)
+
+                reflection_direction = 2 * \
+                    (hit.normal @ point_to_light) * \
+                    (hit.normal - point_to_light)
+
+                specular_shading = surf.material.k_a * self.intensity * \
+                    surf.material.k_s * \
+                    (reflection_direction @ ray)**surf.material.p
+
+                return diffuse_shading + specular_shading
 
 
 class Scene:
