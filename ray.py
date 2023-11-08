@@ -69,6 +69,7 @@ class Hit:
         self.normal = normal
         self.material = material
 
+
 # Value to represent absence of an intersection
 no_hit = Hit(np.inf)
 
@@ -98,26 +99,27 @@ class Sphere:
 
         # calculate coefficients for quadratic equation representing intersection
 
-        c = np.dot(ray.origin-self.center, ray.origin-self.center) - self.radius**2
+        c = np.dot(ray.origin-self.center, ray.origin -
+                   self.center) - self.radius**2
         b = 2*np.dot(ray.origin-self.center, ray.direction)
         a = np.dot(ray.direction, ray.direction)
 
         # solve quadratic formula for t
         if b**2-4*a*c < 0:
-            return no_hit 
+            return no_hit
         else:
-          t_1 = (-1*b + np.sqrt(b**2-4*a*c))/(2*a)
-          t_2 = (-1*b - np.sqrt(b**2-4*a*c))/(2*a)
-          if t_1 > t_2:
-              t = t_2 
-          else:
-              t = t_1 
-          point = []
-          for i in range(3):
-              point += [ray.origin[i]+t*ray.direction[i]]
-          normal = np.array(point) - self.center 
-          normal = normal/np.linalg.norm(normal)
-          return Hit(t, point, normal, self.material)   
+            t_1 = (-1*b + np.sqrt(b**2-4*a*c))/(2*a)
+            t_2 = (-1*b - np.sqrt(b**2-4*a*c))/(2*a)
+            if t_1 > t_2:
+                t = t_2
+            else:
+                t = t_1
+            point = []
+            for i in range(3):
+                point += [ray.origin[i]+t*ray.direction[i]]
+            normal = np.array(point) - self.center
+            normal = normal/np.linalg.norm(normal)
+            return Hit(t, point, normal, self.material)
 
 
 class Triangle:
@@ -146,7 +148,7 @@ class Triangle:
 
 class Camera:
 
-    def __init__(self, eye=vec([0,0,0]), target=vec([0,0,-1]), up=vec([0,1,0]), 
+    def __init__(self, eye=vec([0, 0, 0]), target=vec([0, 0, -1]), up=vec([0, 1, 0]),
                  vfov=90.0, aspect=1.0):
         """Create a camera with given viewing parameters.
 
@@ -212,7 +214,7 @@ class PointLight:
         self.position = position
         self.intensity = intensity
 
-    def illuminate(self, ray, hit, scene):
+    def illuminate(self, ray: Ray, hit: Hit, scene):
         """Compute the shading at a surface point due to this light.
 
         Parameters:
@@ -223,7 +225,24 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0,0,0])
+        for surf in scene.surfs:
+            if surf.intersection(ray) == hit:
+                point_to_light = hit.point - self.position
+
+                # make a unit vector
+                point_to_light /= np.linalg.norm(point_to_light)
+
+                diffuse_shading = surf.material.k_d * \
+                    self.intensity * (hit.normal @ point_to_light)
+
+                reflection_direction = 2 * \
+                    (hit.normal @ point_to_light) * \
+                    (hit.normal - point_to_light)
+
+                specular_shading = surf.material.k_s * self.intensity * \
+                    (reflection_direction @ ray)**surf.material.p
+
+                return diffuse_shading + specular_shading
 
 
 class AmbientLight:
@@ -247,12 +266,29 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0,0,0])
+        for surf in scene.surfs:
+            if surf.intersection(ray) == hit:
+                diffuse_shading = surf.material.k_a * self.intensity * surf.material.k_d
+
+                point_to_light = hit.point - self.position
+
+                # make a unit vector
+                point_to_light /= np.linalg.norm(point_to_light)
+
+                reflection_direction = 2 * \
+                    (hit.normal @ point_to_light) * \
+                    (hit.normal - point_to_light)
+
+                specular_shading = surf.material.k_a * self.intensity * \
+                    surf.material.k_s * \
+                    (reflection_direction @ ray)**surf.material.p
+
+                return diffuse_shading + specular_shading
 
 
 class Scene:
 
-    def __init__(self, surfs, bg_color=vec([0.2,0.3,0.5])):
+    def __init__(self, surfs, bg_color=vec([0.2, 0.3, 0.5])):
         """Create a scene containing the given objects.
 
         Parameters:
@@ -271,10 +307,21 @@ class Scene:
           Hit -- the hit data
         """
         # TODO A4 implement this function
-        return no_hit
+
+        intersections = []
+        for surf in self.surfs:
+            intersections.append(surf.intersect(ray))
+
+        smallest_t_intersection = no_hit
+        for intersection in intersections:
+            if intersection.t < smallest_t_intersection.t:
+                smallest_t_intersection = intersection
+
+        return smallest_t_intersection
 
 
 MAX_DEPTH = 4
+
 
 def shade(ray, hit, scene, lights, depth=0):
     """Compute shading for a ray-surface intersection.
@@ -291,7 +338,12 @@ def shade(ray, hit, scene, lights, depth=0):
     of MAX_DEPTH, with zero contribution beyond that depth.
     """
     # TODO A4 implement this function
-    return vec([0,0,0])
+    if hit == no_hit:
+        return scene.bg_color
+    else:
+        for surf in scene.surfs:
+            if surf.intersect(ray) == hit:
+                return surf.material.k_d
 
 
 def render_image(camera, scene, lights, nx, ny):
@@ -306,7 +358,7 @@ def render_image(camera, scene, lights, nx, ny):
       (ny, nx, 3) float32 -- the RGB image
     """
     # TODO A4 implement this function
-    output = np.zeros((ny,nx,3), np.float32)
+    output = np.zeros((ny, nx, 3), np.float32)
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
@@ -321,9 +373,9 @@ def render_image(camera, scene, lights, nx, ny):
             intersection = scene.surfs[0].intersect(ray);
     
             if intersection == no_hit:
-                output[i][j] = [0,0,0]
+                output[i][j] = [0, 0, 0]
             else:
                 output[i][j] = [255, 255, 255]
-            #add to output image
+            # add to output image
 
     return output
