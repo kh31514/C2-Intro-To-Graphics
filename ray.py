@@ -226,7 +226,7 @@ class PointLight:
         """
         # TODO A4 implement this function
         for surf in scene.surfs:
-            if surf.intersection(ray) == hit:
+            if surf.intersect(ray) == hit:
                 point_to_light = hit.point - self.position
 
                 # make a unit vector
@@ -266,8 +266,9 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        for surf in scene.surfs:
-            if surf.intersection(ray) == hit:
+        return self.intensity
+        """ for surf in scene.surfs:
+            if surf.intersect(ray) == hit:
                 diffuse_shading = surf.material.k_a * self.intensity * surf.material.k_d
 
                 point_to_light = hit.point - self.position
@@ -283,7 +284,7 @@ class AmbientLight:
                     surf.material.k_s * \
                     (reflection_direction @ ray)**surf.material.p
 
-                return diffuse_shading + specular_shading
+                return diffuse_shading + specular_shading """
 
 
 class Scene:
@@ -370,12 +371,12 @@ def render_image(camera, scene, lights, nx, ny):
             ray_dir = [0., 0., -1.]
             ray = camera.generate_ray(texture_coords)
             #print(ray.origin)
-            intersection = scene.surfs[0].intersect(ray);
+
+            for surf in scene.surfs:
+              hit = surf.intersect(ray)
+              for light in lights:
+                  # add to output image
+                  output[i][j] += light.illuminate(ray, hit, scene)
     
-            if intersection == no_hit:
-                output[i][j] = [0, 0, 0]
-            else:
-                output[i][j] = [255, 255, 255]
-            # add to output image
 
     return output
