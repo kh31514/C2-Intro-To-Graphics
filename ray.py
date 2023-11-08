@@ -161,9 +161,10 @@ class Camera:
         """
         self.eye = eye
         self.aspect = aspect
-        self.f = None; # you should set this to the distance from your center of projection to the image plane
-        self.M = np.eye(4);  # set this to the matrix that transforms your camera's coordinate system to world coordinates
-        self.target = target;
+        self.f = None  # you should set this to the distance from your center of projection to the image plane
+        # set this to the matrix that transforms your camera's coordinate system to world coordinates
+        self.M = np.eye(4)
+        self.target = target
         self.up = up
         self.vfov = vfov
 
@@ -184,10 +185,10 @@ class Camera:
         d = np.linalg.norm(self.eye-self.target)
         h = d*np.tan(self.vfov/2)
         w = h*self.aspect
-        
-        
-        text_coords = img_point 
-        m = np.array([[w, 0, -1.*w/2,],[0, -1.*h, h/2],[0,0,1]]) # scale and translate to origin
+
+        text_coords = img_point
+        # scale and translate to origin
+        m = np.array([[w, 0, -1.*w/2,], [0, -1.*h, h/2], [0, 0, 1]])
         img_coords = m @ text_coords
         u = img_coords[0]
         v = img_coords[1]
@@ -225,9 +226,14 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
+        # print(hit.normal)
+        # print(hit.point)
+        # print(hit.t)
         for surf in scene.surfs:
-            if surf.intersect(ray) == hit:
-                point_to_light = hit.point - self.position
+            if hit.point == None:
+                return vec([0, 0, 0])
+            if surf.intersect(ray).point == hit.point:
+                point_to_light = self.position - hit.point
 
                 # make a unit vector
                 point_to_light /= np.linalg.norm(point_to_light)
@@ -235,13 +241,15 @@ class PointLight:
                 diffuse_shading = surf.material.k_d * \
                     self.intensity * (hit.normal @ point_to_light)
 
-                reflection_direction = 2 * \
-                    (hit.normal @ point_to_light) * \
-                    (hit.normal - point_to_light)
+                # Code for specular shading
+                # reflection_direction = 2 * \
+                #     (hit.normal @ point_to_light) * \
+                #     (hit.normal - point_to_light)
 
-                specular_shading = surf.material.k_s * self.intensity * \
-                    (reflection_direction @ ray)**surf.material.p
+                # specular_shading = surf.material.k_s * self.intensity * \
+                #     (reflection_direction @ ray.direction)**surf.material.p / hit.t**2
 
+                return diffuse_shading
                 return diffuse_shading + specular_shading
 
 
@@ -266,25 +274,26 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return self.intensity
-        """ for surf in scene.surfs:
-            if surf.intersect(ray) == hit:
+        for surf in scene.surfs:
+            if surf.intersect(ray).point == hit.point:
                 diffuse_shading = surf.material.k_a * self.intensity * surf.material.k_d
 
-                point_to_light = hit.point - self.position
+                # Code for specular shading
+                # point_to_light = hit.point - self.position
 
                 # make a unit vector
-                point_to_light /= np.linalg.norm(point_to_light)
+                # point_to_light /= np.linalg.norm(point_to_light)
 
-                reflection_direction = 2 * \
-                    (hit.normal @ point_to_light) * \
-                    (hit.normal - point_to_light)
+                # reflection_direction = 2 * \
+                #     (hit.normal @ point_to_light) * \
+                #     (hit.normal - point_to_light)
 
-                specular_shading = surf.material.k_a * self.intensity * \
-                    surf.material.k_s * \
-                    (reflection_direction @ ray)**surf.material.p
+                # specular_shading = surf.material.k_a * self.intensity * \
+                #     surf.material.k_s * \
+                #     (reflection_direction @ ray.direction)**surf.material.p
 
-                return diffuse_shading + specular_shading """
+                return diffuse_shading
+                return diffuse_shading + specular_shading
 
 
 class Scene:
@@ -339,11 +348,11 @@ def shade(ray, hit, scene, lights, depth=0):
     of MAX_DEPTH, with zero contribution beyond that depth.
     """
     # TODO A4 implement this function
-    if hit == no_hit:
+    if hit.point == np.inf:  # indicates no hit
         return scene.bg_color
     else:
         for surf in scene.surfs:
-            if surf.intersect(ray) == hit:
+            if surf.intersect(ray).point == hit.point:
                 return surf.material.k_d
 
 
@@ -364,19 +373,18 @@ def render_image(camera, scene, lights, nx, ny):
         for j in range(nx):
             # calculate world coordinates
             # TODO: figure out which one of these is right
-            #texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
+            # texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
             texture_coords = np.array([(j)/nx, (i)/ny, 1])
-            m = np.array([[2., 0., -1.],[0., -2., 1.],[0., 0., 1.]])
+            m = np.array([[2., 0., -1.], [0., -2., 1.], [0., 0., 1.]])
             image_coords = m @ texture_coords
             ray_dir = [0., 0., -1.]
             ray = camera.generate_ray(texture_coords)
-            #print(ray.origin)
+            # print(ray.origin)
 
             for surf in scene.surfs:
-              hit = surf.intersect(ray)
-              for light in lights:
-                  # add to output image
-                  output[i][j] += light.illuminate(ray, hit, scene)
-    
+                hit = surf.intersect(ray)
+                for light in lights:
+                    # add to output image
+                    output[i][j] += light.illuminate(ray, hit, scene)
 
     return output
