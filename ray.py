@@ -305,7 +305,7 @@ def render_image(camera, scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            texture_coords = np.array([j/nx, i/ny, 1])
+            texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
             m = np.array([[2., 0., -1.],[0., -2., 1.],[0., 0., 1.]])
             image_coords = m @ texture_coords
             ray_dir = [0., 0., -1.]
