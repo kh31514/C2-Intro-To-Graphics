@@ -69,6 +69,7 @@ class Hit:
         self.normal = normal
         self.material = material
 
+
 # Value to represent absence of an intersection
 no_hit = Hit(np.inf)
 
@@ -98,26 +99,27 @@ class Sphere:
 
         # calculate coefficients for quadratic equation representing intersection
 
-        c = np.dot(ray.origin-self.center, ray.origin-self.center) - self.radius**2
+        c = np.dot(ray.origin-self.center, ray.origin -
+                   self.center) - self.radius**2
         b = 2*np.dot(ray.origin-self.center, ray.direction)
         a = np.dot(ray.direction, ray.direction)
 
         # solve quadratic formula for t
         if b**2-4*a*c < 0:
-            return no_hit 
+            return no_hit
         else:
-          t_1 = (-1*b + np.sqrt(b**2-4*a*c))/(2*a)
-          t_2 = (-1*b - np.sqrt(b**2-4*a*c))/(2*a)
-          if t_1 > t_2:
-              t = t_2 
-          else:
-              t = t_1 
-          point = []
-          for i in range(3):
-              point += [ray.origin[i]+t*ray.direction[i]]
-          normal = np.array(point) - self.center 
-          normal = normal/np.linalg.norm(normal)
-          return Hit(t, point, normal, self.material)   
+            t_1 = (-1*b + np.sqrt(b**2-4*a*c))/(2*a)
+            t_2 = (-1*b - np.sqrt(b**2-4*a*c))/(2*a)
+            if t_1 > t_2:
+                t = t_2
+            else:
+                t = t_1
+            point = []
+            for i in range(3):
+                point += [ray.origin[i]+t*ray.direction[i]]
+            normal = np.array(point) - self.center
+            normal = normal/np.linalg.norm(normal)
+            return Hit(t, point, normal, self.material)
 
 
 class Triangle:
@@ -146,7 +148,7 @@ class Triangle:
 
 class Camera:
 
-    def __init__(self, eye=vec([0,0,0]), target=vec([0,0,-1]), up=vec([0,1,0]), 
+    def __init__(self, eye=vec([0, 0, 0]), target=vec([0, 0, -1]), up=vec([0, 1, 0]),
                  vfov=90.0, aspect=1.0):
         """Create a camera with given viewing parameters.
 
@@ -159,8 +161,9 @@ class Camera:
         """
         self.eye = eye
         self.aspect = aspect
-        self.f = None; # you should set this to the distance from your center of projection to the image plane
-        self.M = np.eye(4);  # set this to the matrix that transforms your camera's coordinate system to world coordinates
+        self.f = None  # you should set this to the distance from your center of projection to the image plane
+        # set this to the matrix that transforms your camera's coordinate system to world coordinates
+        self.M = np.eye(4)
         # TODO A4 implement this constructor to store whatever you need for ray generation
 
     def generate_ray(self, img_point):
@@ -180,13 +183,16 @@ class Camera:
         # convert image point to world coordinates
         w = self.vfov*self.aspect
         h = self.vfov
-        
+
         text_coords = img_point + [1.]
-        scale_m = np.array([[w, 0, -1*w/2,],[0, -1*h, h/2],[0,0,1]]) # scale and translate to origin
+        # scale and translate to origin
+        scale_m = np.array([[w, 0, -1*w/2,], [0, -1*h, h/2], [0, 0, 1]])
         theta = 0
         # TODO: fix rotation matrix
-        rot_m = np.array([[np.cos(theta), -1*np.sin(theta), 0], [np.sin(theta), np.cos(theta), 0], [0, 0, 1]]) # rotate based on up vector
-        translate_m = np.array([[1, 0, self.target[1]], [0, 1, self.target[0]], [0, 0, 1]])
+        rot_m = np.array([[np.cos(theta), -1*np.sin(theta), 0], [np.sin(theta),
+                         np.cos(theta), 0], [0, 0, 1]])  # rotate based on up vector
+        translate_m = np.array(
+            [[1, 0, self.target[1]], [0, 1, self.target[0]], [0, 0, 1]])
         img_plane_coords = translate_m @ (rot_m @ (scale_m @ text_coords))
 
         # subtract camera location from image point
@@ -218,7 +224,7 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0,0,0])
+        return vec([0, 0, 0])
 
 
 class AmbientLight:
@@ -242,12 +248,12 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        return vec([0,0,0])
+        return vec([0, 0, 0])
 
 
 class Scene:
 
-    def __init__(self, surfs, bg_color=vec([0.2,0.3,0.5])):
+    def __init__(self, surfs, bg_color=vec([0.2, 0.3, 0.5])):
         """Create a scene containing the given objects.
 
         Parameters:
@@ -266,10 +272,21 @@ class Scene:
           Hit -- the hit data
         """
         # TODO A4 implement this function
-        return no_hit
+
+        intersections = []
+        for surf in self.surfs:
+            intersections.append(surf.intersect(ray))
+
+        smallest_t_intersection = no_hit
+        for intersection in intersections:
+            if intersection.t < smallest_t_intersection.t:
+                smallest_t_intersection = intersection
+
+        return smallest_t_intersection
 
 
 MAX_DEPTH = 4
+
 
 def shade(ray, hit, scene, lights, depth=0):
     """Compute shading for a ray-surface intersection.
@@ -286,7 +303,12 @@ def shade(ray, hit, scene, lights, depth=0):
     of MAX_DEPTH, with zero contribution beyond that depth.
     """
     # TODO A4 implement this function
-    return vec([0,0,0])
+    if hit == no_hit:
+        return scene.bg_color
+    else:
+        for surf in scene.surfs:
+            if surf.intersect(ray) == hit:
+                return surf.material.k_d
 
 
 def render_image(camera, scene, lights, nx, ny):
@@ -301,22 +323,23 @@ def render_image(camera, scene, lights, nx, ny):
       (ny, nx, 3) float32 -- the RGB image
     """
     # TODO A4 implement this function
-    output = np.zeros((ny,nx,3), np.float32)
+    output = np.zeros((ny, nx, 3), np.float32)
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
             texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
-            m = np.array([[2., 0., -1.],[0., -2., 1.],[0., 0., 1.]])
+            m = np.array([[2., 0., -1.], [0., -2., 1.], [0., 0., 1.]])
             image_coords = m @ texture_coords
             ray_dir = [0., 0., -1.]
-            ray = Ray(origin=[image_coords[0], image_coords[1], 0], direction=ray_dir)
-            #print(ray.origin)
-            intersection = scene.surfs[0].intersect(ray);
-    
+            ray = Ray(origin=[image_coords[0],
+                      image_coords[1], 0], direction=ray_dir)
+            # print(ray.origin)
+            intersection = scene.surfs[0].intersect(ray)
+
             if intersection == no_hit:
-                output[i][j] = [0,0,0]
+                output[i][j] = [0, 0, 0]
             else:
                 output[i][j] = [255, 255, 255]
-            #add to output image
+            # add to output image
 
     return output
