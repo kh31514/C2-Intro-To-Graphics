@@ -182,6 +182,7 @@ class Camera:
         # TODO A4 implement this function
         # generate ray using perspective
 
+        img_point[1]=1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
         h = d*np.tan(self.vfov/2)
         w = h*self.aspect
@@ -381,10 +382,17 @@ def render_image(camera, scene, lights, nx, ny):
             ray = camera.generate_ray(texture_coords)
             # print(ray.origin)
 
+            num_hits = 0 # for testing
             for surf in scene.surfs:
                 hit = surf.intersect(ray)
                 for light in lights:
                     # add to output image
+                    if hit != no_hit:
+                        num_hits += 1
                     output[i][j] += light.illuminate(ray, hit, scene)
+            current_output = output[i][j]
+            diff = current_output - [0, 0, 0]
+            if np.sum(diff) < 1:
+                output[i][j] = scene.bg_color
 
     return output
