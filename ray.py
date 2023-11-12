@@ -229,15 +229,23 @@ class PointLight:
         """
         # TODO A4 implement this function
 
+        light_direction = hit.point - self.position
+
+        light_direction /= np.linalg.norm(light_direction)
+        surface_nomal = hit.normal / np.linalg.norm(hit.normal)
+        intensity = self.intensity / np.linalg.norm(self.intensity)
+
+        # if there is an intersection between hit point and light pos, there should be a shadow
+        # TODO fix this - should be in a diff part of the code to change pixels on the "ground"/other
+        # maybe put it outside this loop, or in a diff function 
+        blocking = scene.intersect(Ray(self.position, light_direction))
+        #if blocking != no_hit and blocking.point != hit.point:
+            #return np.zeros(3)
+
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
                 # Diffuse shading
-                light_direction = self.position - hit.point
-
-                light_direction /= np.linalg.norm(light_direction)
-                surface_nomal = hit.normal / np.linalg.norm(hit.normal)
-                intensity = self.intensity / np.linalg.norm(self.intensity)
-
+    
                 diffuse_shading = surf.material.k_d * \
                     intensity * \
                     np.clip((surface_nomal @ light_direction.T), 0, None)
