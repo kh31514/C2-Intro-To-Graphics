@@ -9,15 +9,19 @@ class ExampleSceneDef(object):
         self.scene = scene;
         self.lights = lights;
 
-    def render(self, output_path=None, output_shape=None, srgb_whitepoint=None):
+    def render(self, output_path=None, output_shape=None, gamma_correct=True, srgb_whitepoint=None):
         importlib.reload(ray)
         if(output_shape is None):
             output_shape=[128,128];
         if(srgb_whitepoint is None):
             srgb_whitepoint = 1.0;
         pix = ray.render_image(self.camera, self.scene, self.lights, output_shape[1], output_shape[0]);
-        cam_img_ui8 = to_srgb8(pix / srgb_whitepoint)
-        im = Image(pixels=pix);
+        im = None;
+        if(gamma_correct):
+            cam_img_ui8 = to_srgb8(pix / srgb_whitepoint)
+            im = Image(pixels=cam_img_ui8);
+        else:
+            im = im = Image(pixels=pix);
         if(output_path is None):
             return im;
         else:
