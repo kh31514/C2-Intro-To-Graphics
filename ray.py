@@ -182,7 +182,7 @@ class Camera:
         # TODO A4 implement this function
         # generate ray using perspective
 
-        img_point[1]=1-img_point[1]
+        img_point[1] = 1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
         h = d*np.tan(self.vfov/2)
         w = h*self.aspect
@@ -230,6 +230,11 @@ class PointLight:
         # print(hit.normal)
         # print(hit.point)
         # print(hit.t)
+        if hit.point != None:
+            return vec([255, 255, 255])
+        else:
+            return scene.bg_color
+
         for surf in scene.surfs:
             if hit.point == None:
                 return vec([0, 0, 0])
@@ -275,6 +280,11 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
+        if hit.point != None:
+            return vec([255, 255, 255])
+        else:
+            return scene.bg_color
+
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
                 diffuse_shading = surf.material.k_a * self.intensity * surf.material.k_d
@@ -349,7 +359,7 @@ def shade(ray, hit, scene, lights, depth=0):
     of MAX_DEPTH, with zero contribution beyond that depth.
     """
     # TODO A4 implement this function
-    if hit.point == np.inf:  # indicates no hit
+    if hit.point == None:  # indicates no hit
         return scene.bg_color
     else:
         for surf in scene.surfs:
@@ -369,30 +379,19 @@ def render_image(camera, scene, lights, nx, ny):
       (ny, nx, 3) float32 -- the RGB image
     """
     # TODO A4 implement this function
+
     output = np.zeros((ny, nx, 3), np.float32)
+
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            # TODO: figure out which one of these is right
-            # texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
             texture_coords = np.array([(j)/nx, (i)/ny, 1])
-            m = np.array([[2., 0., -1.], [0., -2., 1.], [0., 0., 1.]])
-            image_coords = m @ texture_coords
-            ray_dir = [0., 0., -1.]
             ray = camera.generate_ray(texture_coords)
-            # print(ray.origin)
 
-            num_hits = 0 # for testing
-            for surf in scene.surfs:
-                hit = surf.intersect(ray)
-                for light in lights:
-                    # add to output image
-                    if hit != no_hit:
-                        num_hits += 1
-                    output[i][j] += light.illuminate(ray, hit, scene)
-            current_output = output[i][j]
-            diff = current_output - [0, 0, 0]
-            if np.sum(diff) < 1:
-                output[i][j] = scene.bg_color
+            # for surf in scene.surfs:
+            hit = scene.intersect(ray)
+            output[i][j] = shade(ray, hit, scene, lights)
+            # for light in lights:
+            #     output[i][j] += light.illuminate(ray, hit, scene)
 
     return output
