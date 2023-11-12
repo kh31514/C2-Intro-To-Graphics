@@ -17,7 +17,7 @@ class ExampleSceneDef(object):
             srgb_whitepoint = 1.0;
         pix = ray.render_image(self.camera, self.scene, self.lights, output_shape[1], output_shape[0]);
         cam_img_ui8 = to_srgb8(pix / srgb_whitepoint)
-        im = Image(pixels=pix);
+        im = Image(pixels=im);
         if(output_path is None):
             return im;
         else:

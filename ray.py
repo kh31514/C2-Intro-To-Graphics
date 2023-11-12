@@ -382,16 +382,22 @@ def render_image(camera, scene, lights, nx, ny):
             ray = camera.generate_ray(texture_coords)
             # print(ray.origin)
 
-            num_hits = 0 # for testing
+            if i > 140:
+                pass # debugging
+
+            light_sum = np.zeros(3)
+            #num_hits = 0 # for testing
             for surf in scene.surfs:
                 hit = surf.intersect(ray)
-                for light in lights:
-                    # add to output image
-                    if hit != no_hit:
-                        num_hits += 1
-                    output[i][j] += light.illuminate(ray, hit, scene)
-            current_output = output[i][j]
-            diff = current_output - [0, 0, 0]
+                if hit != no_hit:
+                  for light in lights:
+                      # add to output image
+                      #if hit != no_hit:
+                          #num_hits += 1
+                      light_sum += light.illuminate(ray, hit, scene)
+            
+            diff = light_sum - np.zeros(3)
+            output[i][j] = light_sum
             if np.sum(diff) < 1:
                 output[i][j] = scene.bg_color
 
