@@ -182,7 +182,7 @@ class Camera:
         # TODO A4 implement this function
         # generate ray using perspective
 
-        img_point[1]=1-img_point[1]
+        img_point[1] = 1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
         h = d*np.tan(self.vfov/2)
         w = h*self.aspect
@@ -199,6 +199,7 @@ class Camera:
 
         # subtract camera location from image point
         ray_dir = d*w_vec + u * u_vec + v * v_vec
+        ray_dir /= np.linalg.norm(ray_dir)
 
         # TODO find valid start location
         return Ray(self.eye, ray_dir, 1)
@@ -227,28 +228,31 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        # print(hit.normal)
-        # print(hit.point)
-        # print(hit.t)
-        for surf in scene.surfs:
-            if hit.point == None:
-                return vec([0, 0, 0])
-            if surf.intersect(ray).point == hit.point:
-                point_to_light = self.position - hit.point
 
-                # make a unit vector
-                point_to_light /= np.linalg.norm(point_to_light)
+        for surf in scene.surfs:
+            if surf.intersect(ray).point == hit.point:
+                # Diffuse shading
+                light_direction = self.position - hit.point
+
+                light_direction /= np.linalg.norm(light_direction)
+                surface_nomal = hit.normal / np.linalg.norm(hit.normal)
+                intensity = self.intensity / np.linalg.norm(self.intensity)
 
                 diffuse_shading = surf.material.k_d * \
-                    self.intensity * (hit.normal @ point_to_light)
+                    intensity * \
+                    np.clip((surface_nomal @ light_direction.T), 0, None)
 
-                # Code for specular shading
+                # Specular shading
                 # reflection_direction = 2 * \
-                #     (hit.normal @ point_to_light) * \
-                #     (hit.normal - point_to_light)
+                #     (surface_nomal @ light_direction) * \
+                #     surface_nomal - light_direction
 
-                # specular_shading = surf.material.k_s * self.intensity * \
-                #     (reflection_direction @ ray.direction)**surf.material.p / hit.t**2
+                # reflection_direction /= np.linalg.norm(reflection_direction)
+                # view_direction = ray.direction / np.linalg.norm(ray.direction)
+
+                # specular_shading = surf.material.k_s * intensity * \
+                #     np.clip((view_direction @ reflection_direction),
+                #             0, None)**surf.material.p
 
                 return diffuse_shading
                 return diffuse_shading + specular_shading
@@ -275,23 +279,28 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
+
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
-                diffuse_shading = surf.material.k_a * self.intensity * surf.material.k_d
+                # Diffuse shading
+                intensity = self.intensity / np.linalg.norm(self.intensity)
 
-                # Code for specular shading
-                # point_to_light = hit.point - self.position
+                diffuse_shading = surf.material.k_a * intensity * surf.material.k_d
 
-                # make a unit vector
-                # point_to_light /= np.linalg.norm(point_to_light)
+                # Specular shading
+                # surface_nomal = hit.normal / np.linalg.norm(hit.normal)
+                # view_direction = ray.direction / np.linalg.norm(ray.direction)
 
                 # reflection_direction = 2 * \
-                #     (hit.normal @ point_to_light) * \
-                #     (hit.normal - point_to_light)
+                #     (surface_nomal @ view_direction) * \
+                #     surface_nomal - view_direction
+
+                # reflection_direction /= np.linalg.norm(reflection_direction)
 
                 # specular_shading = surf.material.k_a * self.intensity * \
                 #     surf.material.k_s * \
-                #     (reflection_direction @ ray.direction)**surf.material.p
+                #     np.clip((view_direction @ reflection_direction.T),
+                #             0, None)**surf.material.p
 
                 return diffuse_shading
                 return diffuse_shading + specular_shading
@@ -349,12 +358,13 @@ def shade(ray, hit, scene, lights, depth=0):
     of MAX_DEPTH, with zero contribution beyond that depth.
     """
     # TODO A4 implement this function
-    if hit.point == np.inf:  # indicates no hit
+    if hit.point == None:  # indicates no hit
         return scene.bg_color
-    else:
-        for surf in scene.surfs:
-            if surf.intersect(ray).point == hit.point:
-                return surf.material.k_d
+
+    output = vec([0, 0, 0])
+    for light in lights:
+        output += light.illuminate(ray, hit, scene)
+    return output
 
 
 def render_image(camera, scene, lights, nx, ny):
@@ -369,36 +379,17 @@ def render_image(camera, scene, lights, nx, ny):
       (ny, nx, 3) float32 -- the RGB image
     """
     # TODO A4 implement this function
+
     output = np.zeros((ny, nx, 3), np.float32)
+
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            # TODO: figure out which one of these is right
-            # texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
             texture_coords = np.array([(j)/nx, (i)/ny, 1])
-            m = np.array([[2., 0., -1.], [0., -2., 1.], [0., 0., 1.]])
-            image_coords = m @ texture_coords
-            ray_dir = [0., 0., -1.]
             ray = camera.generate_ray(texture_coords)
-            # print(ray.origin)
 
-            if i > 140:
-                pass # debugging
-
-            light_sum = np.zeros(3)
-            #num_hits = 0 # for testing
-            for surf in scene.surfs:
-                hit = surf.intersect(ray)
-                if hit != no_hit:
-                  for light in lights:
-                      # add to output image
-                      #if hit != no_hit:
-                          #num_hits += 1
-                      light_sum += light.illuminate(ray, hit, scene)
-            
-            diff = light_sum - np.zeros(3)
-            output[i][j] = light_sum
-            if np.sum(diff) < 1:
-                output[i][j] = scene.bg_color
+            # for surf in scene.surfs:
+            hit = scene.intersect(ray)
+            output[i][j] = shade(ray, hit, scene, lights)
 
     return output
