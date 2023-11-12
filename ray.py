@@ -199,6 +199,7 @@ class Camera:
 
         # subtract camera location from image point
         ray_dir = d*w_vec + u * u_vec + v * v_vec
+        ray_dir /= np.linalg.norm(ray_dir)
 
         # TODO find valid start location
         return Ray(self.eye, ray_dir, 1)
@@ -227,33 +228,31 @@ class PointLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        # print(hit.normal)
-        # print(hit.point)
-        # print(hit.t)
-        if hit.point != None:
-            return vec([255, 255, 255])
-        else:
-            return scene.bg_color
 
         for surf in scene.surfs:
-            if hit.point == None:
-                return vec([0, 0, 0])
             if surf.intersect(ray).point == hit.point:
-                point_to_light = self.position - hit.point
+                # Diffuse shading
+                light_direction = self.position - hit.point
 
-                # make a unit vector
-                point_to_light /= np.linalg.norm(point_to_light)
+                light_direction /= np.linalg.norm(light_direction)
+                surface_nomal = hit.normal / np.linalg.norm(hit.normal)
+                intensity = self.intensity / np.linalg.norm(self.intensity)
 
                 diffuse_shading = surf.material.k_d * \
-                    self.intensity * (hit.normal @ point_to_light)
+                    intensity * \
+                    np.clip((surface_nomal @ light_direction.T), 0, None)
 
-                # Code for specular shading
+                # Specular shading
                 # reflection_direction = 2 * \
-                #     (hit.normal @ point_to_light) * \
-                #     (hit.normal - point_to_light)
+                #     (surface_nomal @ light_direction) * \
+                #     surface_nomal - light_direction
 
-                # specular_shading = surf.material.k_s * self.intensity * \
-                #     (reflection_direction @ ray.direction)**surf.material.p / hit.t**2
+                # reflection_direction /= np.linalg.norm(reflection_direction)
+                # view_direction = ray.direction / np.linalg.norm(ray.direction)
+
+                # specular_shading = surf.material.k_s * intensity * \
+                #     np.clip((view_direction @ reflection_direction),
+                #             0, None)**surf.material.p
 
                 return diffuse_shading
                 return diffuse_shading + specular_shading
@@ -280,28 +279,28 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-        if hit.point != None:
-            return vec([255, 255, 255])
-        else:
-            return scene.bg_color
 
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
-                diffuse_shading = surf.material.k_a * self.intensity * surf.material.k_d
+                # Diffuse shading
+                intensity = self.intensity / np.linalg.norm(self.intensity)
 
-                # Code for specular shading
-                # point_to_light = hit.point - self.position
+                diffuse_shading = surf.material.k_a * intensity * surf.material.k_d
 
-                # make a unit vector
-                # point_to_light /= np.linalg.norm(point_to_light)
+                # Specular shading
+                # surface_nomal = hit.normal / np.linalg.norm(hit.normal)
+                # view_direction = ray.direction / np.linalg.norm(ray.direction)
 
                 # reflection_direction = 2 * \
-                #     (hit.normal @ point_to_light) * \
-                #     (hit.normal - point_to_light)
+                #     (surface_nomal @ view_direction) * \
+                #     surface_nomal - view_direction
+
+                # reflection_direction /= np.linalg.norm(reflection_direction)
 
                 # specular_shading = surf.material.k_a * self.intensity * \
                 #     surf.material.k_s * \
-                #     (reflection_direction @ ray.direction)**surf.material.p
+                #     np.clip((view_direction @ reflection_direction.T),
+                #             0, None)**surf.material.p
 
                 return diffuse_shading
                 return diffuse_shading + specular_shading
@@ -361,10 +360,11 @@ def shade(ray, hit, scene, lights, depth=0):
     # TODO A4 implement this function
     if hit.point == None:  # indicates no hit
         return scene.bg_color
-    else:
-        for surf in scene.surfs:
-            if surf.intersect(ray).point == hit.point:
-                return surf.material.k_d
+
+    output = vec([0, 0, 0])
+    for light in lights:
+        output += light.illuminate(ray, hit, scene)
+    return output
 
 
 def render_image(camera, scene, lights, nx, ny):
@@ -391,7 +391,5 @@ def render_image(camera, scene, lights, nx, ny):
             # for surf in scene.surfs:
             hit = scene.intersect(ray)
             output[i][j] = shade(ray, hit, scene, lights)
-            # for light in lights:
-            #     output[i][j] += light.illuminate(ray, hit, scene)
 
     return output
