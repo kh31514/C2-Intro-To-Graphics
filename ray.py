@@ -229,26 +229,27 @@ class PointLight:
         """
         # TODO A4 implement this function
 
-        light_direction = hit.point - self.position
-
-        light_direction /= np.linalg.norm(light_direction)
-        surface_nomal = hit.normal / np.linalg.norm(hit.normal)
-        intensity = self.intensity / np.linalg.norm(self.intensity)
-
         # if there is an intersection between hit point and light pos, there should be a shadow
         # TODO fix this - should be in a diff part of the code to change pixels on the "ground"/other
-        # maybe put it outside this loop, or in a diff function 
-        blocking = scene.intersect(Ray(self.position, light_direction))
-        #if blocking != no_hit and blocking.point != hit.point:
-            #return np.zeros(3)
+        # maybe put it outside this loop, or in a diff function
+        # blocking = scene.intersect(Ray(self.position, light_direction))
+        # if blocking != no_hit and blocking.point != hit.point:
+        # return np.zeros(3)
+
+        # return vec([0, 0, 0])
+
+        light_direction = hit.point - self.position
+        r = np.linalg.norm(light_direction)
+        light_direction /= r
+        surface_nomal = hit.normal / np.linalg.norm(hit.normal)
 
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
                 # Diffuse shading
-    
                 diffuse_shading = surf.material.k_d * \
-                    intensity * \
-                    np.clip((surface_nomal @ light_direction.T), 0, None)
+                    self.intensity * \
+                    np.clip((surface_nomal @ light_direction),
+                            0, None) / r**2
 
                 # Specular shading
                 # reflection_direction = 2 * \
@@ -290,28 +291,8 @@ class AmbientLight:
 
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
-                # Diffuse shading
-                intensity = self.intensity / np.linalg.norm(self.intensity)
 
-                diffuse_shading = surf.material.k_a * intensity * surf.material.k_d
-
-                # Specular shading
-                # surface_nomal = hit.normal / np.linalg.norm(hit.normal)
-                # view_direction = ray.direction / np.linalg.norm(ray.direction)
-
-                # reflection_direction = 2 * \
-                #     (surface_nomal @ view_direction) * \
-                #     surface_nomal - view_direction
-
-                # reflection_direction /= np.linalg.norm(reflection_direction)
-
-                # specular_shading = surf.material.k_a * self.intensity * \
-                #     surf.material.k_s * \
-                #     np.clip((view_direction @ reflection_direction.T),
-                #             0, None)**surf.material.p
-
-                return diffuse_shading
-                return diffuse_shading + specular_shading
+                return surf.material.k_a * self.intensity
 
 
 class Scene:
