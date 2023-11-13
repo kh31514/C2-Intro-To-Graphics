@@ -238,32 +238,25 @@ class PointLight:
 
         # return vec([0, 0, 0])
 
-        light_direction = hit.point - self.position
-        r = np.linalg.norm(light_direction)
-        light_direction /= r
-        surface_nomal = hit.normal / np.linalg.norm(hit.normal)
+        l = self.position - hit.point
+        r = np.linalg.norm(l)
+        l /= np.linalg.norm(l)
+        n = hit.normal / np.linalg.norm(hit.normal)
+        v = ray.direction / np.linalg.norm(ray.direction)
+        h = -v + l / np.linalg.norm(-v + l)
 
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
                 # Diffuse shading
                 diffuse_shading = surf.material.k_d * \
                     self.intensity * \
-                    np.clip((surface_nomal @ light_direction),
-                            0, None) / r**2
+                    np.clip((n @ l), 0, None) / r**2
 
                 # Specular shading
-                # reflection_direction = 2 * \
-                #     (surface_nomal @ light_direction) * \
-                #     surface_nomal - light_direction
+                specular_shading = surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p * self.intensity * \
+                    np.clip((n @ l),
+                            0, None) / r**2
 
-                # reflection_direction /= np.linalg.norm(reflection_direction)
-                # view_direction = ray.direction / np.linalg.norm(ray.direction)
-
-                # specular_shading = surf.material.k_s * intensity * \
-                #     np.clip((view_direction @ reflection_direction),
-                #             0, None)**surf.material.p
-
-                return diffuse_shading
                 return diffuse_shading + specular_shading
 
 
@@ -291,7 +284,6 @@ class AmbientLight:
 
         for surf in scene.surfs:
             if surf.intersect(ray).point == hit.point:
-
                 return surf.material.k_a * self.intensity
 
 
@@ -356,7 +348,7 @@ def shade(ray, hit, scene, lights, depth=0):
     return output
 
 
-def render_image(camera, scene, lights, nx, ny):
+def render_image(camera: Camera, scene: Scene, lights, nx, ny):
     """Render a ray traced image.
 
     Parameters:
