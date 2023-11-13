@@ -142,7 +142,20 @@ class Triangle:
         Return:
           Hit -- the hit data
         """
-        # TODO A4 implement this function
+        m = np.array([[self.vs[0][0]-self.vs[1][0], self.vs[0][0]-self.vs[2][0], ray.direction[0]],
+                      [self.vs[0][1]-self.vs[1][1], self.vs[0][1]-self.vs[2][1], ray.direction[1]],
+                      [self.vs[0][2]-self.vs[1][2], self.vs[0][2]-self.vs[2][2], ray.direction[2]]])
+        result_matrix = np.array([self.vs[0][0]-ray.origin[0], self.vs[0][1]-ray.origin[1], self.vs[0][2]-ray.origin[2]])
+        solutions = np.linalg.solve(m, result_matrix)
+        beta = solutions[0]
+        gamma = solutions[1]
+        t = solutions[2]
+
+        print(self.vs)
+        print()
+        if t >= ray.start and t <= ray.end and beta > 0 and gamma > 0 and beta+gamma < 1:
+            normal = np.dot(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2]) # TODO check this is right
+            return Hit(t, ray.origin + t*ray.direction, normal, self.material)
         return no_hit
 
 
@@ -238,8 +251,9 @@ class PointLight:
         # if there is an intersection between hit point and light pos, there should be a shadow
         # TODO fix this - should be in a diff part of the code to change pixels on the "ground"/other
         # maybe put it outside this loop, or in a diff function 
-        blocking = scene.intersect(Ray(self.position, light_direction))
-        #if blocking != no_hit and blocking.point != hit.point:
+        # TODO pick better start value?
+        blocking = scene.intersect(Ray(hit.point, self.position-hit.point, 1))
+        #if blocking != no_hit:
             #return np.zeros(3)
 
         for surf in scene.surfs:
@@ -289,7 +303,8 @@ class AmbientLight:
         # TODO A4 implement this function
 
         for surf in scene.surfs:
-            if surf.intersect(ray).point == hit.point:
+            point = np.array(surf.intersect(ray).point)
+            if (point == hit.point).all():
                 # Diffuse shading
                 intensity = self.intensity / np.linalg.norm(self.intensity)
 
@@ -366,7 +381,7 @@ def shade(ray, hit, scene, lights, depth=0):
     of MAX_DEPTH, with zero contribution beyond that depth.
     """
     # TODO A4 implement this function
-    if hit.point == None:  # indicates no hit
+    if hit == no_hit:  # indicates no hit
         return scene.bg_color
 
     output = vec([0, 0, 0])
