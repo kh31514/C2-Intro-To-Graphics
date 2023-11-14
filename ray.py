@@ -240,10 +240,6 @@ class PointLight:
         Return:
           (3,) -- the light reflected from the surface
         """
-        # TODO A4 implement this function
-
-        
-
         l = self.position - hit.point
         r = np.linalg.norm(l)
         l /= np.linalg.norm(l)
@@ -254,7 +250,7 @@ class PointLight:
         # TODO pick better start value?
         blocking = scene.intersect(Ray(hit.point, self.position-hit.point, 1))
         #if blocking != no_hit:
-            #return np.zeros(3)
+           #return np.zeros(3)
 
         for surf in scene.surfs:
             point = np.array(surf.intersect(ray).point)
@@ -356,6 +352,20 @@ def shade(ray, hit, scene, lights, depth=0):
         return scene.bg_color
 
     output = vec([0, 0, 0])
+
+    if depth == MAX_DEPTH:
+        return output
+    
+    if hit.material.k_m > 0:
+        # mirror reflection
+        v = ray.direction
+        r =  2 * np.dot(hit.normal, v) * hit.normal - v
+        refl_ray = Ray(hit.point, r, .1)
+        #print(refl_ray)
+        reflection = shade(refl_ray, scene.intersect(refl_ray), scene, lights, depth+1)
+        #print(np.sum(reflection))
+        output += hit.material.k_m*reflection
+
     for light in lights:
         output += light.illuminate(ray, hit, scene)
     return output
