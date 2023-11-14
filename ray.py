@@ -198,9 +198,9 @@ class Camera:
         # TODO A4 implement this function
         # generate ray using perspective
 
-        img_point[1] = 1-img_point[1]
+        #img_point[1] = 1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
-        h = d*np.tan(self.vfov/2)
+        h = d*np.tan(self.vfov*np.pi/180)
         w = h*self.aspect
 
         text_coords = img_point
@@ -209,12 +209,12 @@ class Camera:
         img_coords = m @ text_coords
         u = img_coords[0]
         v = img_coords[1]
-        w_vec = (self.target-self.eye)/np.linalg.norm(self.target-self.eye)
+        w_vec = (self.eye-self.target)/np.linalg.norm(self.target-self.eye)
         v_vec = self.up/np.linalg.norm(self.up)
         u_vec = np.cross(v_vec, w_vec)/np.linalg.norm(np.cross(v_vec, w_vec))
 
         # subtract camera location from image point
-        ray_dir = d*w_vec + u * u_vec + v * v_vec
+        ray_dir = -1*d*w_vec + u * u_vec + v * v_vec
         ray_dir /= np.linalg.norm(ray_dir)
 
         # TODO find valid start location
@@ -252,7 +252,7 @@ class PointLight:
 
         # maybe put it outside this loop, or in a diff function
         # TODO pick better start value?
-        blocking = scene.intersect(Ray(origin=hit.point, direction=self.position-hit.point, start=1))
+        blocking = scene.intersect(Ray(origin=hit.point, direction=self.position-hit.point, start=.01))
         if blocking != no_hit:
            return np.zeros(3)
 
