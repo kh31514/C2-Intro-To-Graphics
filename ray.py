@@ -143,9 +143,11 @@ class Triangle:
           Hit -- the hit data
         """
         m = np.array([[self.vs[0][0]-self.vs[1][0], self.vs[0][0]-self.vs[2][0], ray.direction[0]],
-                      [self.vs[0][1]-self.vs[1][1], self.vs[0][1]-self.vs[2][1], ray.direction[1]],
+                      [self.vs[0][1]-self.vs[1][1], self.vs[0]
+                          [1]-self.vs[2][1], ray.direction[1]],
                       [self.vs[0][2]-self.vs[1][2], self.vs[0][2]-self.vs[2][2], ray.direction[2]]])
-        result_matrix = np.array([self.vs[0][0]-ray.origin[0], self.vs[0][1]-ray.origin[1], self.vs[0][2]-ray.origin[2]])
+        result_matrix = np.array(
+            [self.vs[0][0]-ray.origin[0], self.vs[0][1]-ray.origin[1], self.vs[0][2]-ray.origin[2]])
         solutions = np.linalg.solve(m, result_matrix)
         beta = solutions[0]
         gamma = solutions[1]
@@ -154,7 +156,8 @@ class Triangle:
         #print(self.vs)
         #print()
         if t >= ray.start and t <= ray.end and beta > 0 and gamma > 0 and beta+gamma < 1:
-            normal = np.dot(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2]) # TODO check this is right
+            # TODO check this is right
+            normal = np.dot(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2])
             return Hit(t, ray.origin + t*ray.direction, normal, self.material)
         return no_hit
 
@@ -244,9 +247,10 @@ class PointLight:
         r = np.linalg.norm(l)
         l /= np.linalg.norm(l)
         n = hit.normal / np.linalg.norm(hit.normal)
-        v = ray.direction / np.linalg.norm(ray.direction)
-        h = -v + l / np.linalg.norm(-v + l)
-        # maybe put it outside this loop, or in a diff function 
+        v = -ray.direction / np.linalg.norm(ray.direction)
+        h = v + l / np.linalg.norm(v + l)
+
+        # maybe put it outside this loop, or in a diff function
         # TODO pick better start value?
         blocking = scene.intersect(Ray(origin=hit.point, direction=self.position-hit.point, start=1))
         if blocking != no_hit:
@@ -261,7 +265,7 @@ class PointLight:
                     np.clip((n @ l), 0, None) / r**2
 
                 # Specular shading
-                specular_shading = surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p * self.intensity * \
+                specular_shading = (surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
                     np.clip((n @ l),
                             0, None) / r**2
 
@@ -355,15 +359,16 @@ def shade(ray, hit, scene, lights, depth=0):
 
     if depth == MAX_DEPTH:
         return output
-    
+
     if hit.material.k_m > 0:
         # mirror reflection
         v = ray.direction
-        r =  2 * np.dot(hit.normal, v) * hit.normal - v
+        r = 2 * np.dot(hit.normal, v) * hit.normal - v
         refl_ray = Ray(hit.point, r, .1)
-        #print(refl_ray)
-        reflection = shade(refl_ray, scene.intersect(refl_ray), scene, lights, depth+1)
-        #print(np.sum(reflection))
+        # print(refl_ray)
+        reflection = shade(refl_ray, scene.intersect(
+            refl_ray), scene, lights, depth+1)
+        # print(np.sum(reflection))
         output += hit.material.k_m*reflection
 
     for light in lights:
