@@ -151,8 +151,8 @@ class Triangle:
         gamma = solutions[1]
         t = solutions[2]
 
-        print(self.vs)
-        print()
+        #print(self.vs)
+        #print()
         if t >= ray.start and t <= ray.end and beta > 0 and gamma > 0 and beta+gamma < 1:
             normal = np.dot(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2]) # TODO check this is right
             return Hit(t, ray.origin + t*ray.direction, normal, self.material)
@@ -248,9 +248,9 @@ class PointLight:
         h = -v + l / np.linalg.norm(-v + l)
         # maybe put it outside this loop, or in a diff function 
         # TODO pick better start value?
-        blocking = scene.intersect(Ray(hit.point, self.position-hit.point, 1))
-        #if blocking != no_hit:
-           #return np.zeros(3)
+        blocking = scene.intersect(Ray(origin=hit.point, direction=self.position-hit.point, start=1))
+        if blocking != no_hit:
+           return np.zeros(3)
 
         for surf in scene.surfs:
             point = np.array(surf.intersect(ray).point)
