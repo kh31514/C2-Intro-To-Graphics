@@ -110,10 +110,14 @@ class Sphere:
         else:
             t_1 = (-1*b + np.sqrt(b**2-4*a*c))/(2*a)
             t_2 = (-1*b - np.sqrt(b**2-4*a*c))/(2*a)
-            if t_1 > t_2:
-                t = t_2
-            else:
-                t = t_1
+            t_vals = []
+            if t_1 >= ray.start and t_1 <= ray.end:
+                t_vals.append(t_1)
+            if t_2 >= ray.start and t_2 <= ray.end:
+                t_vals.append(t_2)
+            if len(t_vals) == 0:
+                return no_hit
+            t = np.min(t_vals)
             point = []
             for i in range(3):
                 point += [ray.origin[i]+t*ray.direction[i]]
@@ -157,7 +161,7 @@ class Triangle:
         #print()
         if t >= ray.start and t <= ray.end and beta > 0 and gamma > 0 and beta+gamma < 1:
             # TODO check this is right
-            normal = np.dot(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2])
+            normal = np.cross(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2])
             return Hit(t, ray.origin + t*ray.direction, normal, self.material)
         return no_hit
 
@@ -248,11 +252,11 @@ class PointLight:
         l /= np.linalg.norm(l)
         n = hit.normal / np.linalg.norm(hit.normal)
         v = -ray.direction / np.linalg.norm(ray.direction)
-        h = v + l / np.linalg.norm(v + l)
+        h = (v + l)/ np.linalg.norm(v + l)
 
         # maybe put it outside this loop, or in a diff function
         # TODO pick better start value?
-        blocking = scene.intersect(Ray(origin=hit.point, direction=self.position-hit.point, start=.01))
+        blocking = scene.intersect(Ray(origin=hit.point, direction=self.position-hit.point, start=10**-6))
         if blocking != no_hit:
            return np.zeros(3)
 
@@ -364,7 +368,7 @@ def shade(ray, hit, scene, lights, depth=0):
         # mirror reflection
         v = ray.direction
         r = 2 * np.dot(hit.normal, v) * hit.normal - v
-        refl_ray = Ray(hit.point, r, .1)
+        refl_ray = Ray(hit.point, -1*r, 10**-6)
         # print(refl_ray)
         reflection = shade(refl_ray, scene.intersect(
             refl_ray), scene, lights, depth+1)
@@ -399,6 +403,9 @@ def render_image(camera: Camera, scene: Scene, lights, nx, ny):
 
             # for surf in scene.surfs:
             hit = scene.intersect(ray)
+            #print(i)
+            #print(j)
+            #print()
             output[i][j] = shade(ray, hit, scene, lights)
 
     return output
