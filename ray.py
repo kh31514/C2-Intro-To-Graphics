@@ -204,7 +204,7 @@ class Camera:
 
         # img_point[1] = 1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
-        h = d*np.tan(self.vfov*np.pi/180)
+        h = 2*d*np.tan(self.vfov/2*np.pi/180)
         w = h*self.aspect
 
         text_coords = img_point
@@ -221,8 +221,7 @@ class Camera:
         ray_dir = -1*d*w_vec + u * u_vec + v * v_vec
         ray_dir /= np.linalg.norm(ray_dir)
 
-        # TODO find valid start location
-        return Ray(self.eye, ray_dir, 1)
+        return Ray(self.eye, ray_dir, 0)
 
 
 class PointLight:
