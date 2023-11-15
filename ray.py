@@ -157,8 +157,8 @@ class Triangle:
         gamma = solutions[1]
         t = solutions[2]
 
-        #print(self.vs)
-        #print()
+        # print(self.vs)
+        # print()
         if t >= ray.start and t <= ray.end and beta > 0 and gamma > 0 and beta+gamma < 1:
             # TODO check this is right
             normal = np.cross(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2])
@@ -202,7 +202,7 @@ class Camera:
         # TODO A4 implement this function
         # generate ray using perspective
 
-        #img_point[1] = 1-img_point[1]
+        # img_point[1] = 1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
         h = d*np.tan(self.vfov*np.pi/180)
         w = h*self.aspect
@@ -252,28 +252,28 @@ class PointLight:
         l /= np.linalg.norm(l)
         n = hit.normal / np.linalg.norm(hit.normal)
         v = -ray.direction / np.linalg.norm(ray.direction)
-        h = (v + l)/ np.linalg.norm(v + l)
+        h = (v + l) / np.linalg.norm(v + l)
 
         # maybe put it outside this loop, or in a diff function
         # TODO pick better start value?
-        blocking = scene.intersect(Ray(origin=hit.point, direction=self.position-hit.point, start=10**-6))
+        blocking = scene.intersect(
+            Ray(origin=hit.point, direction=self.position-hit.point, start=10**-6))
         if blocking != no_hit:
-           return np.zeros(3)
+            return np.zeros(3)
 
         for surf in scene.surfs:
             point = np.array(surf.intersect(ray).point)
             if (point == hit.point).all():
-                # Diffuse shading
-                diffuse_shading = surf.material.k_d * \
-                    self.intensity * \
+
+                diffuse_shading = surf.material.k_d * self.intensity * \
                     np.clip((n @ l), 0, None) / r**2
 
                 # Specular shading
-                specular_shading = (surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
+                specular_shading = (surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
                     np.clip((n @ l),
                             0, None) / r**2
 
-                return diffuse_shading + specular_shading
+                return (diffuse_shading + specular_shading)
 
 
 class AmbientLight:
@@ -301,6 +301,7 @@ class AmbientLight:
         for surf in scene.surfs:
             point = np.array(surf.intersect(ray).point)
             if (point == hit.point).all():
+
                 return surf.material.k_a * self.intensity
 
 
@@ -403,9 +404,9 @@ def render_image(camera: Camera, scene: Scene, lights, nx, ny):
 
             # for surf in scene.surfs:
             hit = scene.intersect(ray)
-            #print(i)
-            #print(j)
-            #print()
+            # print(i)
+            # print(j)
+            # print()
             output[i][j] = shade(ray, hit, scene, lights)
 
     return output
