@@ -204,12 +204,12 @@ class Camera:
 
         # img_point[1] = 1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
-        h = 2*d*np.tan(self.vfov/2*np.pi/180)
+        h = 2*d*np.tan(self.vfov/2.*np.pi/180.)
         w = h*self.aspect
 
         text_coords = img_point
         # scale and translate to origin
-        m = np.array([[w, 0, -1.*w/2,], [0, -1.*h, h/2], [0, 0, 1]])
+        m = np.array([[w, 0, -1.*w/2,], [0, -1.*h, h/2], [0, 0, 1.]])
         img_coords = m @ text_coords
         u = img_coords[0]
         v = img_coords[1]
@@ -398,7 +398,7 @@ def render_image(camera: Camera, scene: Scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            texture_coords = np.array([(j)/nx, (i)/ny, 1])
+            texture_coords = np.array([(j+.5)/nx, (i+.5)/ny, 1])
             ray = camera.generate_ray(texture_coords)
 
             # for surf in scene.surfs:
