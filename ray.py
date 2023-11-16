@@ -213,9 +213,11 @@ class Camera:
         img_coords = m @ text_coords
         u = img_coords[0]
         v = img_coords[1]
-        w_vec = (self.eye-self.target)/np.linalg.norm(self.target-self.eye)
-        v_vec = self.up/np.linalg.norm(self.up)
-        u_vec = np.cross(v_vec, w_vec)/np.linalg.norm(np.cross(v_vec, w_vec))
+        
+        w_vec = normalize(self.eye-self.target)
+        u_vec = normalize(np.cross(self.up, w_vec))
+        v_vec = normalize(np.cross(w_vec, u_vec))
+        
 
         # subtract camera location from image point
         ray_dir = -1*d*w_vec + u * u_vec + v * v_vec
@@ -246,6 +248,9 @@ class PointLight:
         Return:
           (3,) -- the light reflected from the surface
         """
+
+        #return np.zeros(3)
+
         l = self.position - hit.point
         r = np.linalg.norm(l)
         l /= np.linalg.norm(l)
@@ -372,7 +377,7 @@ def shade(ray, hit, scene, lights, depth=0):
         # print(refl_ray)
         reflection = shade(refl_ray, scene.intersect(
             refl_ray), scene, lights, depth+1)
-        # print(np.sum(reflection))
+        #print(np.sum(reflection))
         output += hit.material.k_m*reflection
 
     for light in lights:
