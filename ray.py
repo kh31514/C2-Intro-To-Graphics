@@ -157,10 +157,7 @@ class Triangle:
         gamma = solutions[1]
         t = solutions[2]
 
-        # print(self.vs)
-        # print()
         if t >= ray.start and t <= ray.end and beta > 0 and gamma > 0 and beta+gamma < 1:
-            # TODO check this is right
             normal = np.cross(self.vs[0]-self.vs[1], self.vs[0]-self.vs[2])
             return Hit(t, ray.origin + t*ray.direction, normal, self.material)
         return no_hit
@@ -202,12 +199,11 @@ class Camera:
         # TODO A4 implement this function
         # generate ray using perspective
 
-        # img_point[1] = 1-img_point[1]
         d = np.linalg.norm(self.eye-self.target)
         h = 2*d*np.tan(self.vfov/2*np.pi/180)
         w = h*self.aspect
 
-        text_coords = img_point
+        text_coords = np.append(img_point, 1)
         # scale and translate to origin
         m = np.array([[w, 0, -1.*w/2,], [0, -1.*h, h/2], [0, 0, 1]])
         img_coords = m @ text_coords
@@ -219,7 +215,6 @@ class Camera:
 
         # subtract camera location from image point
         ray_dir = -1*d*w_vec + u * u_vec + v * v_vec
-        ray_dir /= np.linalg.norm(ray_dir)
 
         return Ray(self.eye, ray_dir, 0)
 
@@ -264,15 +259,10 @@ class PointLight:
             point = np.array(surf.intersect(ray).point)
             if (point == hit.point).all():
 
-                diffuse_shading = surf.material.k_d * self.intensity * \
-                    np.clip((n @ l), 0, None) / r**2
-
-                # Specular shading
-                specular_shading = (surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
+                shading = (surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
                     np.clip((n @ l),
                             0, None) / r**2
-
-                return (diffuse_shading + specular_shading)
+                return shading
 
 
 class AmbientLight:
@@ -364,15 +354,13 @@ def shade(ray, hit, scene, lights, depth=0):
     if depth == MAX_DEPTH:
         return output
 
+    # mirror reflection
     if hit.material.k_m > 0:
-        # mirror reflection
         v = ray.direction
         r = 2 * np.dot(hit.normal, v) * hit.normal - v
         refl_ray = Ray(hit.point, -1*r, 10**-6)
-        # print(refl_ray)
         reflection = shade(refl_ray, scene.intersect(
             refl_ray), scene, lights, depth+1)
-        # print(np.sum(reflection))
         output += hit.material.k_m*reflection
 
     for light in lights:
@@ -398,14 +386,10 @@ def render_image(camera: Camera, scene: Scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            texture_coords = np.array([(j)/nx, (i)/ny, 1])
+            texture_coords = np.array([(j)/nx, (i)/ny])
             ray = camera.generate_ray(texture_coords)
 
-            # for surf in scene.surfs:
             hit = scene.intersect(ray)
-            # print(i)
-            # print(j)
-            # print()
             output[i][j] = shade(ray, hit, scene, lights)
 
     return output
