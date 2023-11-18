@@ -127,20 +127,18 @@ class Sphere:
 
 class Cone:
 
-    def __init__(self, center, c, z_0, material):
-        """Create a cone with the given center (x_0 and y_0) and values for z_0 and c
+    def __init__(self, center, c, material):
+        """Create a cone with the given center (x_0, y_0, z_0) and value for c
 
         equation used: ((x-x_0)^2 + (y-y_0)^2)/c^2 = (z - z_0)^2
 
         Parameters:
           center : (3,) -- a 3D point specifying the sphere's center
           c : float -- a Python float specifying the value of c in the equation
-          z_0 : float -- a Python float specifying the value of z_0 in the equation
           material : Material -- the material of the surface
         """
         self.center = center
-        self.radius = c
-        self.z_0 = z_0
+        self.c = c
         self.material = material
 
     def intersect(self, ray):
@@ -154,11 +152,12 @@ class Cone:
 
         # calculate coefficients for quadratic equation representing intersection
 
-        a = ray.direction[0]**2 + ray.direction[1]**2 + self.c**2 * ray.direction[2]**2
-        b = 2*ray.direction[0]*(ray.origin[0]-self.center[0]) + 2*ray.direction[1]*(ray.origin[1]-self.center[1]) 
-        - c**2 * ray.direction[2]*ray.origin[2] + 2*c**2*self.z_0*ray.direction[2]
-        c = (ray.origin[0]-self.center[0])**2 + (ray.origin[1]-self.center[1])**2 - c**2*ray.origin[2]**2 
-        + 2*c**2*self.z_0*ray.origin[2] - c**2*self.z_0**2
+        
+
+        a = ray.direction[0]**2 + ray.direction[2]**2 - self.c**2 * ray.direction[1]**2
+        b = 2*ray.direction[0]*(ray.origin[0]-self.center[0]) + 2*ray.direction[2]*(ray.origin[2]-self.center[2]) 
+        - self.c**2 * 2 * ray.direction[1] * (ray.origin[2]-self.center[1])
+        c = (ray.origin[0]-self.center[0])**2 + (ray.origin[2]-self.center[2])**2 - self.c**2*(ray.origin[1]-self.center[1])**2
 
         # solve quadratic formula for t
         if b**2-4*a*c < 0:

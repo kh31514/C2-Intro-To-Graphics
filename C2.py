@@ -26,6 +26,9 @@ scene = Scene([
     # coals (body)
     Sphere(vec([0, 1.5, 2]), 0.1, coal_black),
     Sphere(vec([0, 1, 2]), 0.1, coal_black),
+
+    # icicles
+    Cone(vec([2, 0, 0]), .05, cieling_gray)
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 
