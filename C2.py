@@ -20,12 +20,13 @@ scene = Scene([
     Sphere(vec([0, 5.9, 14]), 1, cieling_gray),
 
     # coals (eyes)
-    Sphere(vec([0.1, 2.5, 1]), 0.05, coal_black),
-    Sphere(vec([-0.1, 2.5, 1]), 0.05, coal_black),
+    Sphere(vec([0.1, 2.5, 0.4]), 0.05, coal_black),
+    Sphere(vec([-0.1, 2.5, 0.4]), 0.05, coal_black),
 
     # coals (body)
-    Sphere(vec([0, 1.5, 2]), 0.1, coal_black),
-    Sphere(vec([0, 1, 2]), 0.1, coal_black),
+    Sphere(vec([0, 1.75, 0.5]), 0.1, coal_black),
+    Sphere(vec([0, 1.55, 0.6]), 0.1, coal_black),
+    Sphere(vec([0, 1.35, 0.6]), 0.1, coal_black),
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 
