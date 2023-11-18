@@ -125,6 +125,61 @@ class Sphere:
             normal = normal/np.linalg.norm(normal)
             return Hit(t, point, normal, self.material)
 
+class Cone:
+
+    def __init__(self, center, c, z_0, material):
+        """Create a cone with the given center (x_0 and y_0) and values for z_0 and c
+
+        equation used: ((x-x_0)^2 + (y-y_0)^2)/c^2 = (z - z_0)^2
+
+        Parameters:
+          center : (3,) -- a 3D point specifying the sphere's center
+          c : float -- a Python float specifying the value of c in the equation
+          z_0 : float -- a Python float specifying the value of z_0 in the equation
+          material : Material -- the material of the surface
+        """
+        self.center = center
+        self.radius = c
+        self.z_0 = z_0
+        self.material = material
+
+    def intersect(self, ray):
+        """Computes the first (smallest t) intersection between a ray and this cone.
+
+        Parameters:
+          ray : Ray -- the ray to intersect with the sphere
+        Return:
+          Hit -- the hit data
+        """
+
+        # calculate coefficients for quadratic equation representing intersection
+
+        a = ray.direction[0]**2 + ray.direction[1]**2 + self.c**2 * ray.direction[2]**2
+        b = 2*ray.direction[0]*(ray.origin[0]-self.center[0]) + 2*ray.direction[1]*(ray.origin[1]-self.center[1]) 
+        - c**2 * ray.direction[2]*ray.origin[2] + 2*c**2*self.z_0*ray.direction[2]
+        c = (ray.origin[0]-self.center[0])**2 + (ray.origin[1]-self.center[1])**2 - c**2*ray.origin[2]**2 
+        + 2*c**2*self.z_0*ray.origin[2] - c**2*self.z_0**2
+
+        # solve quadratic formula for t
+        if b**2-4*a*c < 0:
+            return no_hit
+        else:
+            t_1 = (-1*b + np.sqrt(b**2-4*a*c))/(2*a)
+            t_2 = (-1*b - np.sqrt(b**2-4*a*c))/(2*a)
+            t_vals = []
+            if t_1 >= ray.start and t_1 <= ray.end:
+                t_vals.append(t_1)
+            if t_2 >= ray.start and t_2 <= ray.end:
+                t_vals.append(t_2)
+            if len(t_vals) == 0:
+                return no_hit
+            t = np.min(t_vals)
+            point = []
+            for i in range(3):
+                point += [ray.origin[i]+t*ray.direction[i]]
+            normal = np.array(point) - self.center
+            normal = normal/np.linalg.norm(normal)
+            return Hit(t, point, normal, self.material)
 
 class Triangle:
 
