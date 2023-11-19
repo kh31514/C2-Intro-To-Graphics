@@ -29,7 +29,7 @@ scene = Scene([
     Sphere(vec([0, 1.35, 0.6]), 0.1, coal_black),
 
     # icicles
-    Cone(vec([2, 0, 0]), .05, cieling_gray)
+    Cone(vec([2, 0, 0]), .1, cieling_gray)
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 

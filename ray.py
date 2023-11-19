@@ -130,7 +130,9 @@ class Cone:
     def __init__(self, center, c, material):
         """Create a cone with the given center (x_0, y_0, z_0) and value for c
 
-        equation used: ((x-x_0)^2 + (y-y_0)^2)/c^2 = (z - z_0)^2
+        equation used: ((x-x_0)^2 + (z-z_0)^2)/c^2 = (y - y_0)^2
+
+        Thus, the cone must point in the y direction
 
         Parameters:
           center : (3,) -- a 3D point specifying the sphere's center
@@ -176,8 +178,14 @@ class Cone:
             point = []
             for i in range(3):
                 point += [ray.origin[i]+t*ray.direction[i]]
-            normal = np.array(point) - self.center
-            normal = normal/np.linalg.norm(normal)
+            # calculate surface normal
+            vec_a = point - self.center
+            vec_b = point - np.array([self.center[0], point[1], self.center[2]])
+            tangent = np.cross(vec_a, vec_b)
+            normal = np.cross(tangent, vec_a)
+            if normal[1] > 0:
+                # make sure normal points in the right direction
+                normal *= -1
             return Hit(t, point, normal, self.material)
 
 class Triangle:
