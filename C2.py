@@ -29,11 +29,14 @@ scene = Scene([
     Sphere(vec([0, 1.2, 0.7]), 0.1, coal_black),
 
     # icicles
-    Cone(vec([2, 0, 0]), .1, cieling_gray),
+    # Cone(vec([2, 0, 0]), .1, cieling_gray),
 
     # hat
-    Cylinder(vec([0,2.6,0]), 0.6, 0.1, coal_black),
-    Cylinder(vec([0,2.7,0]), 0.4, 0.3, coal_black)
+    Cylinder(vec([0,2.6,0]), 0.6, 0.1, 0, coal_black),
+    Cylinder(vec([0,2.7,0]), 0.4, 0.3, 0, coal_black),
+
+    # arms
+    # Cylinder(vec([0.75, 1.25, 0]), 0.4, 0.6, 60, coal_black)
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 

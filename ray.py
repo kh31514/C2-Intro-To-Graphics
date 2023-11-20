@@ -190,20 +190,32 @@ class Cone:
 
 class Cylinder:
 
-  def __init__(self, center, radius, height, material):
-        """Create a cylinder with the given center, radius, and height.
+  def __init__(self, center, radius, height, theta, material):
+        """Create a cylinder with the given center, radius, and height rotated theta degrees with respect to the z axis.
 
         Parameters:
           center : (3,) -- a 3D point specifying the cylinder's center
           radius : float -- a Python float specifying the cylinder's radius
           height : float -- a Python float specifying the cylinder's height
+          theta : float -- a Python float specifying the cylinder's degree of rotation with respect to the z axis (measured in degrees, not radians)
           material : Material -- the material of the surface
         """
         self.center = center
         self.radius = radius
         self.height = height
+        self.theta = theta * np.pi / 180
         self.material = material
 
+  def rotate_point_around_z(self, point, angle):
+    x = point[0] * math.cos(angle) - point[1] * math.sin(angle)
+    y = point[0] * math.sin(angle) + point[1] * math.cos(angle)
+    return np.array([x, y, point[2]])
+  
+  def inverse_rotate_point_around_z(self, point, angle):
+    x = point[0] * math.cos(angle) + point[1] * math.sin(angle)
+    y = -point[0] * math.sin(angle) + point[1] * math.cos(angle)
+    return np.array([x, y, point[2]])
+  
   def intersect(self, ray:Ray):
     """Computes the intersection between a ray and this cylinder, if it exists.
 
@@ -213,11 +225,11 @@ class Cylinder:
         Hit -- the hit data
       """
     # Ray parameters
-    O = ray.origin
-    D = ray.direction
+    O = self.rotate_point_around_z(ray.origin, -self.theta)
+    D = self.rotate_point_around_z(ray.direction, -self.theta)
 
     # Cylinder parameters
-    C = self.center
+    C = self.rotate_point_around_z(self.center, -self.theta)
     r = self.radius
     h = self.height
 
@@ -254,28 +266,36 @@ class Cylinder:
           normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
           normal_z = 2 * (intersection1[2] - C[2])
           normal_vector = (normal_x, normal_y, normal_z)
+          normal_vector = self.inverse_rotate_point_around_z(normal_vector, self.theta)
           normal_vector = normalize(normal_vector)
+          intersection1 = self.inverse_rotate_point_around_z(intersection1, self.theta)
           return Hit(t1, point=intersection1, normal=normal_vector, material=self.material)
         else:
           normal_x = 2 * (intersection2[0] - C[0])
           normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
           normal_z = 2 * (intersection2[2] - C[2])
           normal_vector = (normal_x, normal_y, normal_z)
+          normal_vector = self.inverse_rotate_point_around_z(normal_vector, self.theta)
           normal_vector = normalize(normal_vector)
+          intersection2 = self.inverse_rotate_point_around_z(intersection2, self.theta)
           return Hit(t2, point=intersection2, normal=normal_vector, material=self.material)
     elif valid_intersection1:
         normal_x = 2 * (intersection1[0] - C[0])
         normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
         normal_z = 2 * (intersection1[2] - C[2])
         normal_vector = (normal_x, normal_y, normal_z)
+        normal_vector = self.inverse_rotate_point_around_z(normal_vector, self.theta)
         normal_vector = normalize(normal_vector)
+        intersection1 = self.inverse_rotate_point_around_z(intersection1, self.theta)
         return Hit(t1, point=intersection1, normal=normal_vector, material=self.material)
     elif valid_intersection2:
         normal_x = 2 * (intersection2[0] - C[0])
         normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
         normal_z = 2 * (intersection2[2] - C[2])
         normal_vector = (normal_x, normal_y, normal_z)
+        normal_vector = self.inverse_rotate_point_around_z(normal_vector, self.theta)
         normal_vector = normalize(normal_vector)
+        intersection2 = self.inverse_rotate_point_around_z(intersection2, self.theta)
         return Hit(t2, point=intersection2, normal=normal_vector, material=self.material)
     else:
         return no_hit  # No intersection within cylinder bounds
@@ -414,15 +434,6 @@ class PointLight:
         if blocking != no_hit:
             return np.zeros(3)
 
-        # for surf in scene.surfs:
-        #     point = np.array(surf.intersect(ray).point)
-        #     if (point == hit.point).all():
-
-        #         shading = (surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
-        #             np.clip((n @ l),
-        #                     0, None) / r**2
-        #         return shading
-            
         shading = (hit.material.k_d + hit.material.k_s * (n @ h)**hit.material.p) * self.intensity * \
                     np.clip((n @ l),
                             0, None) / r**2
@@ -450,10 +461,6 @@ class AmbientLight:
           (3,) -- the light reflected from the surface
         """
         # TODO A4 implement this function
-
-        # for surf in scene.surfs:
-        #     point = np.array(surf.intersect(ray).point)
-        #     if (point == hit.point).all():
 
         return hit.material.k_a * self.intensity
 
