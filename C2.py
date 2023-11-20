@@ -25,8 +25,8 @@ scene = Scene([
 
     # coals (body)
     Sphere(vec([0, 1.75, 0.5]), 0.1, coal_black),
-    Sphere(vec([0, 1.55, 0.6]), 0.1, coal_black),
-    Sphere(vec([0, 1.35, 0.6]), 0.1, coal_black),
+    Sphere(vec([0, 1.5, 0.65]), 0.1, coal_black),
+    Sphere(vec([0, 1.2, 0.7]), 0.1, coal_black),
 
     # icicles
     Cone(vec([2, 0, 0]), .1, cieling_gray)
