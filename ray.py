@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 from utils import *
 
 """
@@ -188,6 +188,98 @@ class Cone:
                 normal *= -1
             return Hit(t, point, normal, self.material)
 
+class Cylinder:
+
+  def __init__(self, center, radius, height, material):
+        """Create a cylinder with the given center, radius, and height.
+
+        Parameters:
+          center : (3,) -- a 3D point specifying the cylinder's center
+          radius : float -- a Python float specifying the cylinder's radius
+          height : float -- a Python float specifying the cylinder's height
+          material : Material -- the material of the surface
+        """
+        self.center = center
+        self.radius = radius
+        self.height = height
+        self.material = material
+
+  def intersect(self, ray:Ray):
+    """Computes the intersection between a ray and this cylinder, if it exists.
+
+      Parameters:
+        ray : Ray -- the ray to intersect with the triangle
+      Return:
+        Hit -- the hit data
+      """
+    # Ray parameters
+    O = ray.origin
+    D = ray.direction
+
+    # Cylinder parameters
+    C = self.center
+    r = self.radius
+    h = self.height
+
+    # Calculate components for solving quadratic equation
+    a = D[0] * D[0] + D[2] * D[2]  # Assuming a cylinder aligned with y-axis
+    b = 2 * (D[0] * (O[0] - C[0]) + D[2] * (O[2] - C[2]))
+    c = (O[0] - C[0]) * (O[0] - C[0]) + (O[2] - C[2]) * (O[2] - C[2]) - r * r
+
+    # Solve the quadratic equation
+    discriminant = b * b - 4 * a * c
+    if discriminant < 0:
+        return no_hit  # No intersection
+
+    # Calculate the closest intersection point
+    t1 = (-b + math.sqrt(discriminant)) / (2 * a)
+    t2 = (-b - math.sqrt(discriminant)) / (2 * a)
+
+    # Check if the intersection points are within bounds of the cylinder
+    intersection1 = O + t1 * D
+    intersection2 = O + t2 * D
+
+    # Check if intersections are within height bounds
+    y_min = C[1]
+    y_max = C[1] + h
+    if y_min > y_max:
+        y_min, y_max = y_max, y_min  # Swap values if y_min is greater
+
+    valid_intersection1 = y_min <= intersection1[1] <= y_max
+    valid_intersection2 = y_min <= intersection2[1] <= y_max
+
+    if valid_intersection1 and valid_intersection2:
+        if (np.linalg.norm(intersection1 - O))**2 < (np.linalg.norm(intersection2 - O))**2:
+          normal_x = 2 * (intersection1[0] - C[0])
+          normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
+          normal_z = 2 * (intersection1[2] - C[2])
+          normal_vector = (normal_x, normal_y, normal_z)
+          normal_vector = normalize(normal_vector)
+          return Hit(t1, point=intersection1, normal=normal_vector, material=self.material)
+        else:
+          normal_x = 2 * (intersection2[0] - C[0])
+          normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
+          normal_z = 2 * (intersection2[2] - C[2])
+          normal_vector = (normal_x, normal_y, normal_z)
+          normal_vector = normalize(normal_vector)
+          return Hit(t2, point=intersection2, normal=normal_vector, material=self.material)
+    elif valid_intersection1:
+        normal_x = 2 * (intersection1[0] - C[0])
+        normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
+        normal_z = 2 * (intersection1[2] - C[2])
+        normal_vector = (normal_x, normal_y, normal_z)
+        normal_vector = normalize(normal_vector)
+        return Hit(t1, point=intersection1, normal=normal_vector, material=self.material)
+    elif valid_intersection2:
+        normal_x = 2 * (intersection2[0] - C[0])
+        normal_y = 0  # Cylinder is aligned with the y-axis, so no change in y direction
+        normal_z = 2 * (intersection2[2] - C[2])
+        normal_vector = (normal_x, normal_y, normal_z)
+        normal_vector = normalize(normal_vector)
+        return Hit(t2, point=intersection2, normal=normal_vector, material=self.material)
+    else:
+        return no_hit  # No intersection within cylinder bounds
+
 class Triangle:
 
     def __init__(self, vs, material):
@@ -322,14 +414,19 @@ class PointLight:
         if blocking != no_hit:
             return np.zeros(3)
 
-        for surf in scene.surfs:
-            point = np.array(surf.intersect(ray).point)
-            if (point == hit.point).all():
+        # for surf in scene.surfs:
+        #     point = np.array(surf.intersect(ray).point)
+        #     if (point == hit.point).all():
 
-                shading = (surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
+        #         shading = (surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
+        #             np.clip((n @ l),
+        #                     0, None) / r**2
+        #         return shading
+            
+        shading = (hit.material.k_d + hit.material.k_s * (n @ h)**hit.material.p) * self.intensity * \
                     np.clip((n @ l),
                             0, None) / r**2
-                return shading
+        return shading
 
 
 class AmbientLight:
@@ -354,11 +451,11 @@ class AmbientLight:
         """
         # TODO A4 implement this function
 
-        for surf in scene.surfs:
-            point = np.array(surf.intersect(ray).point)
-            if (point == hit.point).all():
+        # for surf in scene.surfs:
+        #     point = np.array(surf.intersect(ray).point)
+        #     if (point == hit.point).all():
 
-                return surf.material.k_a * self.intensity
+        return hit.material.k_a * self.intensity
 
 
 class Scene:

@@ -20,8 +20,8 @@ scene = Scene([
     Sphere(vec([0, 5.9, 14]), 1, cieling_gray),
 
     # coals (eyes)
-    Sphere(vec([0.1, 2.5, 0.4]), 0.05, coal_black),
-    Sphere(vec([-0.1, 2.5, 0.4]), 0.05, coal_black),
+    Sphere(vec([0.1, 2.4, 0.5]), 0.05, coal_black),
+    Sphere(vec([-0.1, 2.4, 0.5]), 0.05, coal_black),
 
     # coals (body)
     Sphere(vec([0, 1.75, 0.5]), 0.1, coal_black),
@@ -29,7 +29,11 @@ scene = Scene([
     Sphere(vec([0, 1.2, 0.7]), 0.1, coal_black),
 
     # icicles
-    Cone(vec([2, 0, 0]), .1, cieling_gray)
+    Cone(vec([2, 0, 0]), .1, cieling_gray),
+
+    # hat
+    Cylinder(vec([0,2.6,0]), 0.6, 0.1, coal_black),
+    Cylinder(vec([0,2.7,0]), 0.4, 0.3, coal_black)
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 
