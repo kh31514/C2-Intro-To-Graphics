@@ -6,6 +6,7 @@ snowman_white = Material(vec([0.9, 0.9, 0.9]), k_s=0.2, p=90)
 ground_white = Material(vec([0.85, 0.85, 0.85]), k_m=0.4)
 cieling_gray = Material(vec([0.8, 0.8, 0.85]), k_s=0.3, p=90)
 coal_black = Material(vec([0.05, 0.05, 0.05]), k_s=0.2, p=90)
+branch_brown = Material(vec([0.169, 0.094, 0]))
 
 scene = Scene([
     # snowman body
@@ -36,7 +37,8 @@ scene = Scene([
     Cylinder(vec([0,2.7,0]), 0.4, 0.3, 0, coal_black),
 
     # arms
-    # Cylinder(vec([0.75, 1.25, 0]), 0.4, 0.6, 60, coal_black)
+    Cylinder(vec([0.6, 1.6, 0.3]), 0.1, 1.5, -60, branch_brown),
+    Cylinder(vec([-0.6, 1.6, 0.3]), 0.1, 1.5, 60, branch_brown)
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 
