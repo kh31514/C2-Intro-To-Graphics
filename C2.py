@@ -7,6 +7,7 @@ snowman_white = Material(vec([0.9, 0.9, 0.9]), k_s=0.2, p=90)
 ground_white = Material(vec([0.85, 0.85, 0.85]), k_m=0.4)
 cieling_gray = Material(vec([0.8, 0.8, 0.85]), k_s=0.3, p=90)
 coal_black = Material(vec([0.05, 0.05, 0.05]), k_s=0.2, p=90)
+branch_brown = Material(vec([0.169, 0.094, 0]))
 rock_texture = np.array(Image.open("./textures/rock.jpg"))
 rock_material = Material(vec([0.8, 0.8, 0.85]), k_s=0.3, p=90, texture=rock_texture)
 
@@ -23,16 +24,24 @@ scene = Scene([
     Sphere(vec([0, 5.9, 14]), 1, cieling_gray),
 
     # coals (eyes)
-    Sphere(vec([0.1, 2.5, 0.4]), 0.05, coal_black),
-    Sphere(vec([-0.1, 2.5, 0.4]), 0.05, coal_black),
+    Sphere(vec([0.1, 2.4, 0.5]), 0.05, coal_black),
+    Sphere(vec([-0.1, 2.4, 0.5]), 0.05, coal_black),
 
     # coals (body)
     Sphere(vec([0, 1.75, 0.5]), 0.1, coal_black),
-    Sphere(vec([0, 1.55, 0.6]), 0.1, coal_black),
-    Sphere(vec([0, 1.35, 0.6]), 0.1, coal_black),
+    Sphere(vec([0, 1.5, 0.65]), 0.1, coal_black),
+    Sphere(vec([0, 1.2, 0.7]), 0.1, coal_black),
 
     # icicles
-    #Cone(vec([2, 9, 0]), .1, 3, cieling_gray)
+    # Cone(vec([2, 0, 0]), .1, cieling_gray),
+
+    # hat
+    Cylinder(vec([0,2.6,0]), 0.6, 0.1, 0, coal_black),
+    Cylinder(vec([0,2.7,0]), 0.4, 0.3, 0, coal_black),
+
+    # arms
+    Cylinder(vec([0.6, 1.6, 0.3]), 0.1, 1.5, -60, branch_brown),
+    Cylinder(vec([-0.6, 1.6, 0.3]), 0.1, 1.5, 60, branch_brown)
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 
