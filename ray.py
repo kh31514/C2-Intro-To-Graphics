@@ -36,7 +36,7 @@ class Ray:
 
 class Material:
 
-    def __init__(self, k_d, k_s=0., p=20., k_m=0., k_a=None):
+    def __init__(self, k_d, k_s=0., p=20., k_m=0., k_a=None, texture=None):
         """Create a new material with the given parameters.
 
         Parameters:
@@ -45,12 +45,14 @@ class Material:
           p : float -- the specular exponent
           k_m : (3,) or float -- the mirror reflection coefficient
           k_a : (3,) -- the ambient coefficient (defaults to match diffuse color)
+          texture : array representing the material's texture
         """
         self.k_d = k_d
         self.k_s = k_s
         self.p = p
         self.k_m = k_m
         self.k_a = k_a if k_a is not None else k_d
+        self.texture = texture
 
 
 class Hit:
@@ -127,20 +129,22 @@ class Sphere:
 
 class Cone:
 
-    def __init__(self, center, c, material):
+    def __init__(self, center, r, height, material):
         """Create a cone with the given center (x_0, y_0, z_0) and value for c
 
-        equation used: ((x-x_0)^2 + (z-z_0)^2)/c^2 = (y - y_0)^2
+        equation used: ((x-x_0)^2 + (z-z_0)^2)/r^2 = (y - y_0)^2
 
         Thus, the cone must point in the y direction
 
         Parameters:
           center : (3,) -- a 3D point specifying the sphere's center
-          c : float -- a Python float specifying the value of c in the equation
+          r : float -- a Python float specifying the value of r in the equation (affects cone radius)
+          heigh : float -- a Python float restricting the height of the cone
           material : Material -- the material of the surface
         """
         self.center = center
-        self.c = c
+        self.r = r
+        self.height = height
         self.material = material
 
     def intersect(self, ray):
@@ -154,12 +158,10 @@ class Cone:
 
         # calculate coefficients for quadratic equation representing intersection
 
-        
-
-        a = ray.direction[0]**2 + ray.direction[2]**2 - self.c**2 * ray.direction[1]**2
+        a = ray.direction[0]**2 + ray.direction[2]**2 - self.r**2 * ray.direction[1]**2
         b = 2*ray.direction[0]*(ray.origin[0]-self.center[0]) + 2*ray.direction[2]*(ray.origin[2]-self.center[2]) 
-        - self.c**2 * 2 * ray.direction[1] * (ray.origin[2]-self.center[1])
-        c = (ray.origin[0]-self.center[0])**2 + (ray.origin[2]-self.center[2])**2 - self.c**2*(ray.origin[1]-self.center[1])**2
+        - self.r**2 * 2 * ray.direction[1] * (ray.origin[1]-self.center[1])
+        c = (ray.origin[0]-self.center[0])**2 + (ray.origin[2]-self.center[2])**2 - self.r**2*(ray.origin[1]-self.center[1])**2
 
         # solve quadratic formula for t
         if b**2-4*a*c < 0:
@@ -178,11 +180,14 @@ class Cone:
             point = []
             for i in range(3):
                 point += [ray.origin[i]+t*ray.direction[i]]
+            # make sure the point is within the y bounds for the cone
+            #if point[1] < self.center[1] or point[1] > self.center[1] + self.height:
+                #return no_hit
             # calculate surface normal
             vec_a = point - self.center
             vec_b = point - np.array([self.center[0], point[1], self.center[2]])
             tangent = np.cross(vec_a, vec_b)
-            normal = np.cross(tangent, vec_a)
+            normal = normalize(np.cross(tangent, vec_a))
             if normal[1] > 0:
                 # make sure normal points in the right direction
                 normal *= -1
@@ -315,8 +320,6 @@ class PointLight:
         v = -ray.direction / np.linalg.norm(ray.direction)
         h = (v + l) / np.linalg.norm(v + l)
 
-        # maybe put it outside this loop, or in a diff function
-        # TODO pick better start value?
         blocking = scene.intersect(
             Ray(origin=hit.point, direction=self.position-hit.point, start=10**-6))
         if blocking != no_hit:
@@ -325,8 +328,35 @@ class PointLight:
         for surf in scene.surfs:
             point = np.array(surf.intersect(ray).point)
             if (point == hit.point).all():
+                diffuse = surf.material.k_d
+                if type(surf) == Sphere and hit.material.texture is not None:
+                    # calculate texture value for sphere
+                    # calculate spherical coordinates
+                    point_vec = point - surf.center
+                    x_vec = np.array([surf.radius, 0, 0])
+                    y_vec = np.array([0, surf.radius, 0])
+                    point_vec_proj = np.array([point_vec[0], 0, point_vec[2]])
+                    dot = np.dot(x_vec, point_vec_proj)
+                    phi = np.arccos(np.dot(x_vec, point_vec_proj)/(np.linalg.norm(x_vec)*np.linalg.norm(point_vec_proj)))
+                    theta = np.arccos(np.dot(y_vec, point_vec)/(np.linalg.norm(y_vec)*np.linalg.norm(point_vec)))
 
-                shading = (surf.material.k_d + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
+                    
+                    y = theta/np.pi*hit.material.texture.shape[0]
+                    x = phi/np.pi*hit.material.texture.shape[1]
+                    y = int(np.round(y))
+                    x = int(np.round(x))
+
+                    # check for out of bounds
+                    if x == hit.material.texture.shape[1]:
+                        x -= 1
+                    if y == hit.material.texture.shape[0]:
+                        y -= 1
+
+                    diffuse = hit.material.texture[y,x]
+                    diffuse = diffuse/255
+                    print(diffuse)
+
+                shading = (diffuse + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
                     np.clip((n @ l),
                             0, None) / r**2
                 return shading
@@ -453,6 +483,9 @@ def render_image(camera: Camera, scene: Scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
+            #print(i)
+            #print(j)
+            #print()
             texture_coords = np.array([(j+.5)/nx, (i+.5)/ny])
             ray = camera.generate_ray(texture_coords)
 
