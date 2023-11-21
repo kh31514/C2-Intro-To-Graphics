@@ -21,7 +21,7 @@ scene = Scene([
     Sphere(vec([0, -40, 0]), 39.5, rock_material),
 
     # ceiling
-    Sphere(vec([0, 5.9, 14]), 1, cieling_gray),
+    # Sphere(vec([0, 5.9, 14]), 1, cieling_gray),
 
     # coals (eyes)
     Sphere(vec([0.1, 2.4, 0.5]), 0.05, coal_black),
@@ -41,7 +41,24 @@ scene = Scene([
 
     # arms
     Cylinder(vec([0.6, 1.6, 0.3]), 0.1, 1.5, -60, branch_brown),
-    Cylinder(vec([-0.6, 1.6, 0.3]), 0.1, 1.5, 60, branch_brown)
+    Cylinder(vec([-0.6, 1.6, 0.3]), 0.1, 1.5, 60, branch_brown),
+
+    # snowflakes
+    Sphere(vec([-2.5, 3.75, 0.7]), 0.1, snowman_white),
+    Sphere(vec([-2.4, 2, 0]), 0.1, snowman_white),
+    Sphere(vec([-2.25, 1.4, 2]), 0.15, snowman_white),
+    Sphere(vec([-1.75, 0.75, 1]), 0.15, snowman_white),
+    Sphere(vec([-1.75, 4.2, 1]), 0.15, snowman_white),
+    Sphere(vec([-1.5, 2.75, -1]), 0.1, snowman_white),
+    Sphere(vec([-0.35, 3.85, 2]), 0.15, snowman_white),
+    Sphere(vec([0.5, 4, 0.7]), 0.1, snowman_white),
+    Sphere(vec([0.9, 2.4, 0]), 0.1, snowman_white),
+    Sphere(vec([1.2, 4.55, 0]), 0.15, snowman_white),
+    Sphere(vec([1.5, 1.25, 0]), 0.1, snowman_white),
+    Sphere(vec([2, 3.6, 0]), 0.15, snowman_white),
+    Sphere(vec([2.25, 0, 0]), 0.1, snowman_white),
+    Sphere(vec([2.55, 2, -1]), 0.15, snowman_white),
+    Sphere(vec([2.9, 3, -1]), 0.1, snowman_white),
 ],
     bg_color=vec([0.155, 0.163, 0.21]))
 

@@ -466,7 +466,6 @@ class PointLight:
 
                     diffuse = hit.material.texture[y,x]
                     diffuse = diffuse/255
-                    print(diffuse)
 
                 shading = (diffuse + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
                     np.clip((n @ l),
@@ -591,9 +590,6 @@ def render_image(camera: Camera, scene: Scene, lights, nx, ny):
     for i in range(ny):
         for j in range(nx):
             # calculate world coordinates
-            #print(i)
-            #print(j)
-            #print()
             texture_coords = np.array([(j+.5)/nx, (i+.5)/ny])
             ray = camera.generate_ray(texture_coords)
 
