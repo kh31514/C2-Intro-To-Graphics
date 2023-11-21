@@ -448,7 +448,6 @@ class PointLight:
                     x_vec = np.array([surf.radius, 0, 0])
                     y_vec = np.array([0, surf.radius, 0])
                     point_vec_proj = np.array([point_vec[0], 0, point_vec[2]])
-                    dot = np.dot(x_vec, point_vec_proj)
                     phi = np.arccos(np.dot(x_vec, point_vec_proj)/(np.linalg.norm(x_vec)*np.linalg.norm(point_vec_proj)))
                     theta = np.arccos(np.dot(y_vec, point_vec)/(np.linalg.norm(y_vec)*np.linalg.norm(point_vec)))
 
@@ -466,7 +465,11 @@ class PointLight:
 
                     diffuse = hit.material.texture[y,x]
                     diffuse = diffuse/255
-                    print(diffuse)
+                    #print(diffuse)
+                """ elif type(surf) == Cylinder and hit.material.texture is not None:
+                    theta = np.arccos(np.dot(surf.normal, vec([1, 0, 0]))/np.linalg.norm(surf.normal))
+                    y = hit.point[1] """
+                     
 
                 shading = (diffuse + surf.material.k_s * (n @ h)**surf.material.p) * self.intensity * \
                     np.clip((n @ l),

@@ -8,20 +8,27 @@ ground_white = Material(vec([0.85, 0.85, 0.85]), k_m=0.4)
 cieling_gray = Material(vec([0.8, 0.8, 0.85]), k_s=0.3, p=90)
 coal_black = Material(vec([0.05, 0.05, 0.05]), k_s=0.2, p=90)
 branch_brown = Material(vec([0.169, 0.094, 0]))
+
 rock_texture = np.array(Image.open("./textures/rock.jpg"))
 rock_material = Material(vec([0.8, 0.8, 0.85]), k_s=0.3, p=90, texture=rock_texture)
 
+snow_texture = np.array(Image.open("./textures/snow.jpg"))
+snow_material = Material(vec([0, 0, 0]), k_s = .3, p=90, texture=snow_texture)
+
+ice_texture = np.array(Image.open("./textures/ice1.png"))
+ice_material = Material(vec([0, 0, 0]), k_s = .3, p=90, texture=ice_texture)
+
 scene = Scene([
     # snowman body
-    Sphere(vec([0, 0, 0]), 1, snowman_white),
-    Sphere(vec([0, 1.25, 0]), 0.75, snowman_white),
-    Sphere(vec([0, 2.25, 0]), 0.5, snowman_white),
+    Sphere(vec([0, 0, 0]), 1, snow_material),
+    Sphere(vec([0, 1.25, 0]), .75, snow_material),
+    Sphere(vec([0, 2.25, 0]), 0.5, snow_material),
 
     # ground
-    Sphere(vec([0, -40, 0]), 39.5, rock_material),
+    Sphere(vec([0, -40, 0]), 39.5, snow_material),
 
     # ceiling
-    Sphere(vec([0, 5.9, 14]), 1, cieling_gray),
+    #Sphere(vec([0, 43.5, 0]), 39.5, cieling_gray),
 
     # coals (eyes)
     Sphere(vec([0.1, 2.4, 0.5]), 0.05, coal_black),
@@ -33,7 +40,7 @@ scene = Scene([
     Sphere(vec([0, 1.2, 0.7]), 0.1, coal_black),
 
     # icicles
-    # Cone(vec([2, 0, 0]), .1, cieling_gray),
+    #Cone(vec([2, 0, 0]), .1, 3, cieling_gray),
 
     # hat
     Cylinder(vec([0,2.6,0]), 0.6, 0.1, 0, coal_black),
