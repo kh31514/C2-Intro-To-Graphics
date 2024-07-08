@@ -3,7 +3,7 @@
 <br />
 <br />
 
-Ray tracing to render a custom snowman scene (see [C2.png](https://github.com/kh31514/C2-Intro-To-Graphics/blob/main/C2.png))
+Ray tracing to render a 3D custom snowman scene (see [C2.png](https://github.com/kh31514/C2-Intro-To-Graphics/blob/main/C2.png))
 
 Modifications to starter code:
 * Implementation of snowy texture
